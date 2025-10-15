@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: elibrary-system
+    env: java
+    buildCommand: ./mvnw clean package -DskipTests
+    startCommand: java -jar target/elibrary-0.0.1-SNAPSHOT.jar
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
