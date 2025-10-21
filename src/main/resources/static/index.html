@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E-Library System</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>📚 E-Library System</h1>
+  </header>
+
+  <main>
+    <section id="books-section">
+      <h2>Available Books</h2>
+      <table id="books-table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Genre</th>
+            <th>Available</th>
+          </tr>
+        </thead>
+        <tbody id="books-body"></tbody>
+      </table>
+    </section>
+
+    <section id="add-book-section">
+      <h2>Add New Book</h2>
+      <form id="add-book-form">
+        <input type="text" id="title" placeholder="Title" required>
+        <input type="text" id="author" placeholder="Author" required>
+        <input type="text" id="genre" placeholder="Genre" required>
+        <button type="submit">Add Book</button>
+      </form>
+    </section>
+  </main>
+
+  <footer>
+    <p>Team Codex © 2025 – E-Library System</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
