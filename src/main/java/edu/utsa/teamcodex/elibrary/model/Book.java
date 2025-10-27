@@ -1,5 +1,6 @@
 package edu.utsa.teamcodex.elibrary.model;
 
+import java.time.LocalDate; 
 import jakarta.persistence.*;
 
 @Entity
@@ -12,6 +13,7 @@ public class Book {
     private String author;
     private String genre;
     private boolean available = true;
+    private LocalDate dueDate;
 
     // Getters and Setters
     public Long getId() {
@@ -48,4 +50,12 @@ public class Book {
     public void setAvailable(boolean available) {
         this.available = available;
     }
+
+    // getter and setter
+    public LocalDate getDueDate() {
+        return dueDate;
+    }
+    public void setDueDate(LocalDate dueDate) {
+        this.dueDate = dueDate;
+}
 }
