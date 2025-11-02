@@ -2,22 +2,35 @@ const apiBase = "https://elibrary-system.onrender.com";
 
 
 // Handle login
-document.getElementById("login-form").addEventListener("submit", async (e) => {
+document.getElementById("login-form").addEventListener("submit", async function(e) {
   e.preventDefault();
+
   const username = document.getElementById("username").value;
   const password = document.getElementById("password").value;
-  const role = document.getElementById("role").value;
 
-  // Basic check (in production you'd verify password properly)
-  const res = await fetch(`${apiBase}/users`);
-  const users = await res.json();
-  const user = users.find(u => u.username === username && u.password === password && u.role === role);
+  try {
+    const response = await fetch("/users/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
+    });
 
-  if (user) {
-    // Save user info to localStorage
-    localStorage.setItem("currentUser", JSON.stringify(user));
-    window.location.href = "index.html";
-  } else {
-    document.getElementById("login-error").textContent = "Invalid credentials or role!";
+    if (!response.ok) {
+      showAlert('danger', "Invalid credentials!");
+      return;
+    }
+
+    const user = await response.json();
+    localStorage.setItem("user", JSON.stringify(user));
+    showAlert('success', `Welcome, ${user.username}!`);
+
+    setTimeout(() => {
+      window.location.href = "index.html";
+    }, 1000);
+
+  } catch (error) {
+    console.error(error);
+    showAlert('danger', "An error occurred during login.");
   }
 });
+
