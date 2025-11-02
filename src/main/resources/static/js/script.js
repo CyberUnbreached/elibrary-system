@@ -10,7 +10,7 @@ if (user) {
   `;
   document.getElementById("logout-btn").addEventListener("click", () => {
     localStorage.removeItem("user");
-    window.location.reload(); // ✅ Refresh current page instead of redirecting
+    window.location.reload(); 
   });
 } else {
   navAuth.innerHTML = `
