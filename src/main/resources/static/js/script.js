@@ -1,6 +1,6 @@
 const apiBase = "https://elibrary-system.onrender.com";
 
-const user = JSON.parse(localStorage.getItem("currentUser"));
+const user = JSON.parse(localStorage.getItem("user"));
 
 if (!user) {
   window.location.href = "login.html";
@@ -8,7 +8,7 @@ if (!user) {
 
 document.getElementById("user-role").textContent = `Logged in as: ${user.role}`;
 document.getElementById("logout-btn").addEventListener("click", () => {
-  localStorage.removeItem("currentUser");
+  localStorage.removeItem("user");
   window.location.href = "login.html";
 });
 
