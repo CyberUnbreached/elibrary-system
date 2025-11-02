@@ -18,6 +18,26 @@ if (user) {
   `;
 }
 
+const thead = document.querySelector("thead tr");
+if (!user) {
+  thead.innerHTML = `
+    <th>Title</th>
+    <th>Author</th>
+    <th>Genre</th>
+    <th>Available</th>
+  `;
+} else {
+  thead.innerHTML = `
+    <th>Title</th>
+    <th>Author</th>
+    <th>Genre</th>
+    <th>Available</th>
+    <th>Due Date</th>
+    <th>Actions</th>
+  `;
+}
+
+
 // Only show Add Book section for staff
 if (!user || user.role !== "STAFF") {
   document.querySelectorAll(".staff-only").forEach(el => el.style.display = "none");
@@ -31,27 +51,37 @@ async function loadBooks() {
   tbody.innerHTML = "";
 
   books.forEach(book => {
-    const tr = document.createElement("tr");
-    let actions = "";
+  const tr = document.createElement("tr");
 
-    // Customers can borrow
-    if (user && user.role === "CUSTOMER" && book.available) {
+  // Show basic info
+  let rowHTML = `
+    <td>${book.title}</td>
+    <td>${book.author}</td>
+    <td>${book.genre}</td>
+    <td>${book.available ? "✅" : "❌"}</td>
+  `;
+
+  // Only add Due Date + Actions if user is logged in
+  if (user) {
+    let actions = "";
+    const dueDate = book.dueDate ? book.dueDate : "-";
+
+    if (user.role === "CUSTOMER" && book.available) {
       actions = `<button class="btn btn-primary btn-sm" onclick="borrowBook(${book.id})">Borrow</button>`;
     }
 
-    // Staff can delete
-    if (user && user.role === "STAFF") {
+    if (user.role === "STAFF") {
       actions = `<button class="btn btn-danger btn-sm" onclick="deleteBook(${book.id})">Delete</button>`;
     }
 
-    tr.innerHTML = `
-      <td>${book.title}</td>
-      <td>${book.author}</td>
-      <td>${book.genre}</td>
-      <td>${book.available ? "✅" : "❌"}</td>
+    rowHTML += `
+      <td>${dueDate}</td>
       <td>${actions}</td>
     `;
-    tbody.appendChild(tr);
+  }
+
+  tr.innerHTML = rowHTML;
+  tbody.appendChild(tr);
   });
 }
 
