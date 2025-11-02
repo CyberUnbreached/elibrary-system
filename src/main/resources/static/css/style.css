@@ -1,4 +1,18 @@
 body {
+  background-color: #f8f9fa;
+}
+.panel {
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+.table > thead > tr.info > th {
+  background-color: #e9f3fb;
+}
+.alert {
+  margin-top: 15px;
+}
+
+
+body {
   font-family: "Segoe UI", sans-serif;
   background-color: #f5f7fa;
   color: #333;
