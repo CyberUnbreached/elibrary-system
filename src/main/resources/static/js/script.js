@@ -46,7 +46,7 @@ async function loadBooks(searchTerm = "") {
   });
 }
 
-// Event listener for search
+// ✅ Run loadBooks() right after DOM loads
 document.addEventListener("DOMContentLoaded", () => {
   const searchBox = document.getElementById("search-box");
   if (searchBox) {
@@ -55,9 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
       loadBooks(term);
     });
   }
+
+  // Load all books initially
+  loadBooks();
 });
-
-window.onload = loadBooks;
-
-
-window.onload = loadBooks;
