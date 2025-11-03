@@ -3,10 +3,15 @@ package edu.utsa.teamcodex.elibrary.model;
 import java.time.LocalDate; 
 import jakarta.persistence.*;
 
+
 @Entity
 public class Book {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @ManyToOne
+    @JoinColumn(name = "borrowed_by_user_id")
+    private User borrowedBy; // null if available
+
     private Long id;
 
     private String title;
@@ -51,11 +56,21 @@ public class Book {
         this.available = available;
     }
 
-    // getter and setter
     public LocalDate getDueDate() {
         return dueDate;
     }
+
     public void setDueDate(LocalDate dueDate) {
         this.dueDate = dueDate;
-}
+    }
+
+    public User getBorrowedBy() {
+        return borrowedBy;
+    }
+
+    public void setBorrowedBy(User borrowedBy) {
+        this.borrowedBy = borrowedBy;
+    }
+
+    
 }
