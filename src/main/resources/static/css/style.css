@@ -11,6 +11,10 @@ body {
   margin-top: 15px;
 }
 
+.navbar-brand .glyphicon-home {
+  margin-right: 6px;
+}
+
 
 body {
   font-family: "Segoe UI", sans-serif;
