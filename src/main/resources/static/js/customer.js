@@ -40,7 +40,7 @@ async function loadBooks(searchTerm = "") {
       action = `<button class="btn btn-success btn-sm" onclick="borrowBook(${book.id})">Borrow</button>`;
     } else {
       const borrowerName = book.borrowedBy ? book.borrowedBy.username : "Another user";
-      action = `<span class="text-muted">Checked Out (${borrowerName})</span>`;
+      action = `<span class="text-muted">Checked Out</span>`;
     }
 
     tr.innerHTML = `
