@@ -11,7 +11,7 @@ public class Transaction {
     private Long id;
 
     @ManyToOne
-    @JsonBackReference("user-transactions")
+    @JsonBackReference("user-transactions") // Prevent recursion
     private User user;
 
     @ManyToOne
@@ -28,8 +28,10 @@ public class Transaction {
         this.book = book;
         this.borrowDate = borrowDate;
         this.returnDate = returnDate;
+        this.returned = false;
     }
 
+    // Getters & Setters
     public Long getId() { return id; }
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }

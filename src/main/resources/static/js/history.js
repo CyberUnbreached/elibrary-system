@@ -22,15 +22,14 @@ document.getElementById("logout-btn").addEventListener("click", () => {
 // Load user's transaction history
 async function loadTransactions() {
   try {
-    // Fetch user data directly (includes transactions)
-    const res = await fetch(`${apiBase}/users/${user.id}`);
-    const userData = await res.json();
+    // ✅ Fetch transactions for this specific user only
+    const res = await fetch(`${apiBase}/transactions/user/${user.id}`);
+    const transactions = await res.json();
 
-    const transactions = userData.transactions || [];
     const tbody = document.getElementById("transactions-body");
     tbody.innerHTML = "";
 
-    if (transactions.length === 0) {
+    if (!transactions || transactions.length === 0) {
       tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No transactions found.</td></tr>`;
       return;
     }
