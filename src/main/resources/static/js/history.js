@@ -10,6 +10,7 @@ if (!user || user.role !== "CUSTOMER") {
 // Navbar setup
 const navAuth = document.getElementById("nav-auth");
 navAuth.innerHTML = `
+  <li><a href="customer.html"><span class="glyphicon glyphicon-book"></span> My Books</a></li>
   <li><a><span class="glyphicon glyphicon-user"></span> ${user.username} (${user.role})</a></li>
   <li><a href="#" id="logout-btn"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
 `;
@@ -18,35 +19,40 @@ document.getElementById("logout-btn").addEventListener("click", () => {
   window.location.href = "index.html";
 });
 
-// Load user's transactions
+// Load user's transaction history
 async function loadTransactions() {
-  const res = await fetch(`${apiBase}/transactions`);
-  const transactions = await res.json();
+  try {
+    // Fetch user data directly (includes transactions)
+    const res = await fetch(`${apiBase}/users/${user.id}`);
+    const userData = await res.json();
 
-  const tbody = document.getElementById("transactions-body");
-  tbody.innerHTML = "";
+    const transactions = userData.transactions || [];
+    const tbody = document.getElementById("transactions-body");
+    tbody.innerHTML = "";
 
-  // Filter transactions for logged-in user
-  const myTransactions = transactions.filter(t => t.user && t.user.id === user.id);
+    if (transactions.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No transactions found.</td></tr>`;
+      return;
+    }
 
-  if (myTransactions.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No transactions found.</td></tr>`;
-    return;
+    transactions.forEach(t => {
+      const tr = document.createElement("tr");
+      const status = t.returned ? "✅ Returned" : "📘 Borrowed";
+
+      tr.innerHTML = `
+        <td>${t.book ? t.book.title : "Unknown Book"}</td>
+        <td>${t.book ? t.book.author : "Unknown"}</td>
+        <td>${t.borrowDate || "-"}</td>
+        <td>${t.returnDate || "-"}</td>
+        <td>${status}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error("Error loading transaction history:", err);
+    const tbody = document.getElementById("transactions-body");
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Error loading transactions.</td></tr>`;
   }
-
-  myTransactions.forEach(t => {
-    const tr = document.createElement("tr");
-    const status = t.returnDate ? "✅ Returned" : "📘 Borrowed";
-
-    tr.innerHTML = `
-      <td>${t.book.title}</td>
-      <td>${t.book.author}</td>
-      <td>${t.borrowDate || "-"}</td>
-      <td>${t.returnDate || "-"}</td>
-      <td>${status}</td>
-    `;
-    tbody.appendChild(tr);
-  });
 }
 
 window.onload = loadTransactions;

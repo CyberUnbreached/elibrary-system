@@ -6,7 +6,6 @@ import java.time.LocalDate;
 
 @Entity
 public class Book {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -19,11 +18,12 @@ public class Book {
 
     @ManyToOne
     @JoinColumn(name = "borrowed_by_id")
-    @JsonBackReference // ✅ Prevent recursion from Book → User → Book
+    @JsonBackReference("user-books")
     private User borrowedBy;
 
-    // Getters & Setters
+    // Getters and setters
     public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
     public String getAuthor() { return author; }

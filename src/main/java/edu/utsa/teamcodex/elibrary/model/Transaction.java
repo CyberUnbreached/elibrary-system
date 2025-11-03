@@ -6,25 +6,30 @@ import java.time.LocalDate;
 
 @Entity
 public class Transaction {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
-    @JsonBackReference // ✅ Prevent recursion for user transactions
+    @JsonBackReference("user-transactions")
     private User user;
 
     @ManyToOne
-    @JoinColumn(name = "book_id")
     private Book book;
 
     private LocalDate borrowDate;
     private LocalDate returnDate;
     private boolean returned;
 
-    // Getters & Setters
+    public Transaction() {}
+
+    public Transaction(User user, Book book, LocalDate borrowDate, LocalDate returnDate) {
+        this.user = user;
+        this.book = book;
+        this.borrowDate = borrowDate;
+        this.returnDate = returnDate;
+    }
+
     public Long getId() { return id; }
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
