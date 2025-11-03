@@ -7,7 +7,7 @@ if (!user || user.role !== "CUSTOMER") {
   window.location.href = "login.html";
 }
 
-// Navbar
+// 🧭 Navbar
 const navAuth = document.getElementById("nav-auth");
 navAuth.innerHTML = `
   <li><a><span class="glyphicon glyphicon-user"></span> ${user.username} (${user.role})</a></li>
@@ -18,29 +18,29 @@ document.getElementById("logout-btn").addEventListener("click", () => {
   window.location.href = "index.html";
 });
 
-// Load all books
+// 📚 Load all books (available and checked-out)
 async function loadBooks(searchTerm = "") {
   const res = await fetch(`${apiBase}/books`);
   const books = await res.json();
   const tbody = document.getElementById("books-body");
   tbody.innerHTML = "";
 
-  const filtered = books.filter(b => {
-    const term = searchTerm.toLowerCase();
-    return (
-      b.title.toLowerCase().includes(term) ||
-      b.author.toLowerCase().includes(term) ||
-      b.genre.toLowerCase().includes(term)
-    );
-  });
+  const term = searchTerm.toLowerCase();
+  const filtered = books.filter(b =>
+    b.title.toLowerCase().includes(term) ||
+    b.author.toLowerCase().includes(term) ||
+    b.genre.toLowerCase().includes(term)
+  );
 
   filtered.forEach(book => {
     const tr = document.createElement("tr");
     let action = "";
+
     if (book.available) {
       action = `<button class="btn btn-success btn-sm" onclick="borrowBook(${book.id})">Borrow</button>`;
     } else {
-      action = `<span class="text-muted">Checked Out</span>`;
+      const borrowerName = book.borrowedBy ? book.borrowedBy.username : "Another user";
+      action = `<span class="text-muted">Checked Out (${borrowerName})</span>`;
     }
 
     tr.innerHTML = `
@@ -54,15 +54,14 @@ async function loadBooks(searchTerm = "") {
   });
 }
 
-// Borrow book
+// 🕓 Borrow book
 async function borrowBook(bookId) {
   const today = new Date();
   const maxReturn = new Date();
   maxReturn.setDate(today.getDate() + 14); // 2 weeks max
 
-  const chosenDate = prompt(
-    `Enter return date (YYYY-MM-DD) up to ${maxReturn.toISOString().split("T")[0]}:`
-  );
+  const latestReturn = maxReturn.toISOString().split("T")[0];
+  const chosenDate = prompt(`Enter return date (YYYY-MM-DD) up to ${latestReturn}:`);
   if (!chosenDate) return;
 
   const returnDate = new Date(chosenDate);
@@ -71,70 +70,66 @@ async function borrowBook(bookId) {
     return;
   }
 
-  const borrow = {
-    user: { id: user.id },
-    book: { id: bookId },
-    borrowDate: today.toISOString().split("T")[0],
-    returnDate: chosenDate
-  };
+  try {
+    const response = await fetch(`${apiBase}/books/${bookId}/borrow/${user.id}?returnDate=${chosenDate}`, {
+      method: "PUT"
+    });
 
-  await fetch(`${apiBase}/transactions`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(borrow)
-  });
+    if (!response.ok) {
+      const text = await response.text();
+      alert(`Error: ${text}`);
+      return;
+    }
 
-  await fetch(`${apiBase}/books/${bookId}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ available: false })
-  });
-
-  alert("Book borrowed successfully!");
-  loadBooks();
-  loadMyBooks();
+    alert("Book borrowed successfully!");
+    loadBooks();
+    loadMyBooks();
+  } catch (error) {
+    console.error("Error borrowing book:", error);
+  }
 }
 
-// Load my borrowed books
+// 📘 Load user’s borrowed books
 async function loadMyBooks() {
-  const res = await fetch(`${apiBase}/transactions`);
+  const res = await fetch(`${apiBase}/transactions/user/${user.id}`);
   const transactions = await res.json();
   const tbody = document.getElementById("my-books-body");
   tbody.innerHTML = "";
 
-  const myTransactions = transactions.filter(t => t.user.id === user.id);
-
-  myTransactions.forEach(t => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${t.book.title}</td>
-      <td>${t.book.author}</td>
-      <td>${t.borrowDate}</td>
-      <td>${t.returnDate}</td>
-      <td><button class="btn btn-warning btn-sm" onclick="returnBook(${t.book.id}, ${t.id})">Return</button></td>
-    `;
-    tbody.appendChild(tr);
-  });
+  transactions
+    .filter(t => !t.returned)
+    .forEach(t => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${t.book.title}</td>
+        <td>${t.book.author}</td>
+        <td>${t.borrowDate}</td>
+        <td>${t.returnDate}</td>
+        <td><button class="btn btn-warning btn-sm" onclick="returnBook(${t.book.id})">Return</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
 }
 
-// Return book
-async function returnBook(bookId, transactionId) {
-  await fetch(`${apiBase}/books/${bookId}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ available: true })
-  });
+// 🔁 Return book
+async function returnBook(bookId) {
+  try {
+    const response = await fetch(`${apiBase}/books/${bookId}/return/${user.id}`, { method: "PUT" });
+    if (!response.ok) {
+      const text = await response.text();
+      alert(`Error: ${text}`);
+      return;
+    }
 
-  await fetch(`${apiBase}/transactions/${transactionId}`, {
-    method: "DELETE"
-  });
-
-  alert("Book returned successfully!");
-  loadBooks();
-  loadMyBooks();
+    alert("Book returned successfully!");
+    loadBooks();
+    loadMyBooks();
+  } catch (error) {
+    console.error("Error returning book:", error);
+  }
 }
 
-// Search
+// 🔍 Search functionality
 document.addEventListener("DOMContentLoaded", () => {
   const searchBox = document.getElementById("search-box");
   if (searchBox) {

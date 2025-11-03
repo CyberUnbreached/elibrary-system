@@ -80,8 +80,8 @@ public class BookController {
     public ResponseEntity<String> returnBook(@PathVariable Long bookId, @PathVariable Long userId) {
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new RuntimeException("Book not found"));
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        //User user = userRepository.findById(userId)
+          //      .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (book.isAvailable() || book.getBorrowedBy() == null) {
             return ResponseEntity.badRequest().body("This book is not currently borrowed.");
