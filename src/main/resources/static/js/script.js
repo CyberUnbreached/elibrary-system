@@ -1,22 +1,40 @@
 const apiBase = "https://elibrary-system.onrender.com";
 const user = JSON.parse(localStorage.getItem("user"));
 
-// Navbar handling
 const navAuth = document.getElementById("nav-auth");
+
 if (user) {
+  // Build navigation links based on role
+  let roleLinks = "";
+
+  if (user.role === "CUSTOMER") {
+    roleLinks = `
+      <li><a href="customer.html"><span class="glyphicon glyphicon-book"></span> My Books</a></li>
+      <li><a href="history.html"><span class="glyphicon glyphicon-time"></span> History</a></li>
+    `;
+  } else if (user.role === "STAFF") {
+    roleLinks = `
+      <li><a href="staff.html"><span class="glyphicon glyphicon-cog"></span> Manage Books</a></li>
+    `;
+  }
+
   navAuth.innerHTML = `
+    ${roleLinks}
     <li><a><span class="glyphicon glyphicon-user"></span> ${user.username} (${user.role})</a></li>
     <li><a href="#" id="logout-btn"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
   `;
+
   document.getElementById("logout-btn").addEventListener("click", () => {
     localStorage.removeItem("user");
-    window.location.reload(); // Refresh homepage on logout
+    window.location.reload(); // Refresh homepage to show guest view
   });
 } else {
+  // Not logged in
   navAuth.innerHTML = `
     <li><a href="login.html"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
   `;
 }
+
 
 // Load books
 async function loadBooks(searchTerm = "") {
