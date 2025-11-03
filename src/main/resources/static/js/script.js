@@ -19,13 +19,22 @@ if (user) {
 }
 
 // Load books
-async function loadBooks() {
+async function loadBooks(searchTerm = "") {
   const res = await fetch(`${apiBase}/books`);
   const books = await res.json();
   const tbody = document.getElementById("books-body");
   tbody.innerHTML = "";
 
-  books.forEach(book => {
+  const filteredBooks = books.filter(book => {
+    const term = searchTerm.toLowerCase();
+    return (
+      book.title.toLowerCase().includes(term) ||
+      book.author.toLowerCase().includes(term) ||
+      book.genre.toLowerCase().includes(term)
+    );
+  });
+
+  filteredBooks.forEach(book => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${book.title}</td>
@@ -36,5 +45,19 @@ async function loadBooks() {
     tbody.appendChild(tr);
   });
 }
+
+// Event listener for search
+document.addEventListener("DOMContentLoaded", () => {
+  const searchBox = document.getElementById("search-box");
+  if (searchBox) {
+    searchBox.addEventListener("input", (e) => {
+      const term = e.target.value.trim();
+      loadBooks(term);
+    });
+  }
+});
+
+window.onload = loadBooks;
+
 
 window.onload = loadBooks;
