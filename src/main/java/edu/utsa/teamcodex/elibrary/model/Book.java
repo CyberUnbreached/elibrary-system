@@ -1,17 +1,14 @@
 package edu.utsa.teamcodex.elibrary.model;
 
-import java.time.LocalDate; 
+import java.time.LocalDate;
 import jakarta.persistence.*;
-
 
 @Entity
 public class Book {
+
+    // ✅ This is your primary key
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @ManyToOne
-    @JoinColumn(name = "borrowed_by_user_id")
-    private User borrowedBy; // null if available
-
     private Long id;
 
     private String title;
@@ -19,6 +16,11 @@ public class Book {
     private String genre;
     private boolean available = true;
     private LocalDate dueDate;
+
+    // ✅ This is your relationship to the User table
+    @ManyToOne
+    @JoinColumn(name = "borrowed_by_user_id")
+    private User borrowedBy; // null if available
 
     // Getters and Setters
     public Long getId() {
@@ -59,7 +61,6 @@ public class Book {
     public LocalDate getDueDate() {
         return dueDate;
     }
-
     public void setDueDate(LocalDate dueDate) {
         this.dueDate = dueDate;
     }
@@ -67,10 +68,7 @@ public class Book {
     public User getBorrowedBy() {
         return borrowedBy;
     }
-
     public void setBorrowedBy(User borrowedBy) {
         this.borrowedBy = borrowedBy;
     }
-
-    
 }
