@@ -14,7 +14,7 @@ if (user) {
     `;
   } else if (user.role === "STAFF") {
     roleLinks = `
-      <li><a href="staff.html"><span class="glyphicon glyphicon-cog"></span> Manage Books</a></li>
+      <li><a href="staff.html"><span class="glyphicon glyphicon-dashboard"></span> Staff Dashboard</a></li>
     `;
   }
 
