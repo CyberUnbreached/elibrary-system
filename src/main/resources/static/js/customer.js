@@ -1,13 +1,11 @@
 const apiBase = "https://elibrary-system.onrender.com";
 const user = JSON.parse(localStorage.getItem("user"));
 
-// 🔒 Require login
 if (!user || user.role !== "CUSTOMER") {
   alert("You must be logged in as a customer to view this page.");
   window.location.href = "login.html";
 }
 
-// 🧭 Navbar
 // Navbar
 const navAuth = document.getElementById("nav-auth");
 navAuth.innerHTML = `
@@ -20,8 +18,7 @@ document.getElementById("logout-btn").addEventListener("click", () => {
   window.location.href = "index.html";
 });
 
-
-// 📚 Load all books (available and checked-out)
+// Load all books
 async function loadBooks(searchTerm = "") {
   const res = await fetch(`${apiBase}/books`);
   const books = await res.json();
@@ -42,7 +39,6 @@ async function loadBooks(searchTerm = "") {
     if (book.available) {
       action = `<button class="btn btn-success btn-sm" onclick="borrowBook(${book.id})">Borrow</button>`;
     } else {
-      const borrowerName = book.borrowedBy ? book.borrowedBy.username : "Another user";
       action = `<span class="text-muted">Checked Out</span>`;
     }
 
@@ -57,24 +53,43 @@ async function loadBooks(searchTerm = "") {
   });
 }
 
-// 🕓 Borrow book
+// Borrow book (open modal)
+let selectedBookId = null;
+
 async function borrowBook(bookId) {
+  selectedBookId = bookId;
+
+  const res = await fetch(`${apiBase}/books/${bookId}`);
+  const book = await res.json();
+
+  document.getElementById("borrowBookTitle").textContent =
+    `Are you sure you want to borrow "${book.title}" by ${book.author}?`;
+
   const today = new Date();
   const maxReturn = new Date();
-  maxReturn.setDate(today.getDate() + 14); // 2 weeks max
+  maxReturn.setDate(today.getDate() + 14);
 
-  const latestReturn = maxReturn.toISOString().split("T")[0];
-  const chosenDate = prompt(`Enter return date (YYYY-MM-DD) up to ${latestReturn}:`);
-  if (!chosenDate) return;
+  const todayStr = today.toISOString().split("T")[0];
+  const maxStr = maxReturn.toISOString().split("T")[0];
 
-  const returnDate = new Date(chosenDate);
-  if (returnDate > maxReturn) {
-    alert("Return date cannot be more than 2 weeks from today.");
+  const dateInput = document.getElementById("returnDate");
+  dateInput.min = todayStr;
+  dateInput.max = maxStr;
+  dateInput.value = todayStr;
+
+  $("#borrowModal").modal("show");
+}
+
+// Confirm borrow
+document.getElementById("confirmBorrowBtn").addEventListener("click", async () => {
+  const chosenDate = document.getElementById("returnDate").value;
+  if (!chosenDate) {
+    alert("Please select a return date.");
     return;
   }
 
   try {
-    const response = await fetch(`${apiBase}/books/${bookId}/borrow/${user.id}?returnDate=${chosenDate}`, {
+    const response = await fetch(`${apiBase}/books/${selectedBookId}/borrow/${user.id}?returnDate=${chosenDate}`, {
       method: "PUT"
     });
 
@@ -84,15 +99,17 @@ async function borrowBook(bookId) {
       return;
     }
 
+    $("#borrowModal").modal("hide");
     alert("Book borrowed successfully!");
     loadBooks();
     loadMyBooks();
   } catch (error) {
     console.error("Error borrowing book:", error);
+    alert("Something went wrong while borrowing the book.");
   }
-}
+});
 
-// 📘 Load user’s borrowed books
+// Load user's borrowed books
 async function loadMyBooks() {
   const res = await fetch(`${apiBase}/transactions/user/${user.id}`);
   const transactions = await res.json();
@@ -114,7 +131,7 @@ async function loadMyBooks() {
     });
 }
 
-// 🔁 Return book
+// Return book
 async function returnBook(bookId) {
   try {
     const response = await fetch(`${apiBase}/books/${bookId}/return/${user.id}`, { method: "PUT" });
@@ -132,7 +149,7 @@ async function returnBook(bookId) {
   }
 }
 
-// 🔍 Search functionality
+// Search and load
 document.addEventListener("DOMContentLoaded", () => {
   const searchBox = document.getElementById("search-box");
   if (searchBox) {
