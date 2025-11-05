@@ -1,6 +1,6 @@
 package edu.utsa.teamcodex.elibrary.model;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 
@@ -10,11 +10,14 @@ public class Transaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JsonBackReference("user-transactions") // Prevent recursion
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "user_id")
+    @JsonIgnoreProperties({"borrowedBooks", "transactions", "password"})
     private User user;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "book_id")
+    @JsonIgnoreProperties({"borrowedBy"})
     private Book book;
 
     private LocalDate borrowDate;
@@ -28,7 +31,6 @@ public class Transaction {
         this.book = book;
         this.borrowDate = borrowDate;
         this.returnDate = returnDate;
-        this.returned = false;
     }
 
     // Getters & Setters

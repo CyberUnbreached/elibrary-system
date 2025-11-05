@@ -26,8 +26,14 @@ public class TransactionController {
 
     @GetMapping
     public List<Transaction> getAllTransactions() {
-        return transactionRepository.findAll();
+        List<Transaction> transactions = transactionRepository.findAll();
+        transactions.forEach(t -> {
+            if (t.getUser() != null) t.getUser().getUsername(); // force initialization
+            if (t.getBook() != null) t.getBook().getTitle();
+        });
+        return transactions;
     }
+
 
     @GetMapping("/user/{userId}")
     public List<Transaction> getTransactionsByUser(@PathVariable Long userId) {
