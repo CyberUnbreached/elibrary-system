@@ -1,100 +1,127 @@
 // staff.js
+const apiBase = "https://elibrary-system.onrender.com";
+const user = JSON.parse(localStorage.getItem("user"));
 
-document.addEventListener("DOMContentLoaded", () => {
-  const user = JSON.parse(localStorage.getItem("user"));
-  const alertContainer = document.getElementById("alert-container");
+// Restrict access to staff only
+if (!user || user.role !== "STAFF") {
+  alert("Access denied. Staff only.");
+  window.location.href = "index.html";
+}
 
-  // Restrict access to staff only
-  if (!user || user.role !== "STAFF") {
-    alert("Access denied. Staff only.");
-    window.location.href = "index.html";
+// Navbar setup
+const navAuth = document.getElementById("nav-auth");
+navAuth.innerHTML = `
+  <li><a href="index.html"><span class="glyphicon glyphicon-home"></span> Home</a></li>
+  <li><a><span class="glyphicon glyphicon-user"></span> ${user.username} (${user.role})</a></li>
+  <li><a href="#" id="logout-btn"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
+`;
+document.getElementById("logout-btn").addEventListener("click", () => {
+  localStorage.removeItem("user");
+  window.location.href = "index.html";
+});
+
+// --- 1️⃣ Load Book Statistics ---
+async function loadBookStats() {
+  const res = await fetch(`${apiBase}/books`);
+  const books = await res.json();
+
+  const available = books.filter(b => b.available).length;
+  const checkedOut = books.filter(b => !b.available).length;
+
+  const today = new Date().toISOString().split("T")[0];
+  const overdue = books.filter(
+    b => b.dueDate && b.dueDate < today && !b.available
+  ).length;
+
+  document.getElementById("available-count").textContent = available;
+  document.getElementById("checkedout-count").textContent = checkedOut;
+  document.getElementById("overdue-count").textContent = overdue;
+}
+
+// --- 2️⃣ Load Recent Transactions ---
+async function loadRecentTransactions() {
+  const res = await fetch(`${apiBase}/transactions`);
+  const transactions = await res.json();
+  const tbody = document.getElementById("recent-transactions-body");
+
+  tbody.innerHTML = "";
+
+  if (transactions.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No transactions available.</td></tr>`;
     return;
   }
 
-  document.getElementById("staff-username").textContent = user.username;
+  const sorted = transactions.sort((a, b) => b.id - a.id).slice(0, 10);
 
-  // Alert helper
-  function showAlert(type, message) {
-    alertContainer.innerHTML =
-      '<div class="alert alert-' + type + ' alert-dismissible fade in">' +
-      '<a href="#" class="close" data-dismiss="alert">&times;</a>' +
-      message +
-      "</div>";
-    setTimeout(() => $(".alert").alert("close"), 4000);
+  sorted.forEach(t => {
+    const tr = document.createElement("tr");
+    const status = t.returned ? "✅ Returned" : "📘 Borrowed";
+
+    tr.innerHTML = `
+      <td>${t.book ? t.book.title : "Unknown Book"}</td>
+      <td>${t.user ? t.user.username : "Unknown User"}</td>
+      <td>${t.borrowDate || "-"}</td>
+      <td>${t.returnDate || "-"}</td>
+      <td>${status}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// --- 3️⃣ Search for User Borrowed Books ---
+async function searchUser() {
+  const searchTerm = document.getElementById("user-search-box").value.trim().toLowerCase();
+  const res = await fetch(`${apiBase}/users`);
+  const users = await res.json();
+
+  const foundUser = users.find(
+    u =>
+      u.username.toLowerCase() === searchTerm ||
+      u.email.toLowerCase() === searchTerm
+  );
+
+  const userInfo = document.getElementById("user-info");
+  const userBooksBody = document.getElementById("user-books-body");
+
+  if (!foundUser) {
+    alert("No user found with that name or email.");
+    userInfo.style.display = "none";
+    return;
   }
 
-  // Load all books
-  async function loadBooks() {
-    const res = await fetch("/books");
-    const books = await res.json();
+  userInfo.style.display = "block";
+  document.getElementById("user-name").textContent = foundUser.username;
+  document.getElementById("user-email").textContent = foundUser.email;
 
-    const tbody = document.getElementById("books-body");
-    tbody.innerHTML = "";
+  const borrowedBooks = foundUser.borrowedBooks || [];
 
-    books.forEach((book) => {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${book.title}</td>
-        <td>${book.author}</td>
-        <td>${book.genre}</td>
-        <td>${book.available ? "✅" : "❌"}</td>
-        <td>
-          <button class="btn btn-danger btn-sm delete-btn" data-id="${book.id}">
-            <span class="glyphicon glyphicon-trash"></span> Delete
-          </button>
-        </td>
-      `;
-      tbody.appendChild(row);
-    });
+  userBooksBody.innerHTML = "";
 
-    // Attach delete events
-    document.querySelectorAll(".delete-btn").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const id = btn.dataset.id;
-        if (confirm("Delete this book?")) {
-          const res = await fetch(`/books/${id}`, { method: "DELETE" });
-          if (res.ok) {
-            showAlert("success", "Book deleted successfully!");
-            loadBooks();
-          } else {
-            showAlert("danger", "Failed to delete book.");
-          }
-        }
-      });
-    });
+  if (borrowedBooks.length === 0) {
+    userBooksBody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">No borrowed books.</td></tr>`;
+    return;
   }
 
-  // Add book form
-  document.getElementById("add-book-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
+  borrowedBooks.forEach(book => {
+    const today = new Date().toISOString().split("T")[0];
+    const overdue = book.dueDate && book.dueDate < today && !book.available;
 
-    const book = {
-      title: document.getElementById("title").value,
-      author: document.getElementById("author").value,
-      genre: document.getElementById("genre").value,
-      available: true
-    };
-
-    const res = await fetch("/books", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(book)
-    });
-
-    if (res.ok) {
-      showAlert("success", "Book added successfully!");
-      e.target.reset();
-      loadBooks();
-    } else {
-      showAlert("danger", "Failed to add book.");
-    }
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${book.title}</td>
+      <td>${book.author}</td>
+      <td>${book.dueDate || "-"}</td>
+      <td>${overdue ? "⚠️ Overdue" : book.available ? "✅ Returned" : "📘 Borrowed"}</td>
+    `;
+    userBooksBody.appendChild(tr);
   });
+}
 
-  // Logout
-  document.getElementById("logout-btn").addEventListener("click", () => {
-    localStorage.removeItem("user");
-    window.location.href = "login.html";
-  });
+// --- 4️⃣ Attach Event Listeners ---
+document.getElementById("search-user-btn").addEventListener("click", searchUser);
 
-  loadBooks();
-});
+// --- 5️⃣ Load Dashboard Data ---
+window.onload = function() {
+  loadBookStats();
+  loadRecentTransactions();
+};
