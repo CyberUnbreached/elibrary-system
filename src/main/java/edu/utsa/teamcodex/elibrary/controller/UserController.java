@@ -3,10 +3,13 @@ package edu.utsa.teamcodex.elibrary.controller;
 import edu.utsa.teamcodex.elibrary.model.User;
 import edu.utsa.teamcodex.elibrary.repository.UserRepository;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
+
 
 @RestController
 @RequestMapping("/users")
@@ -31,22 +34,22 @@ public class UserController {
     }
 
     // LOGIN ENDPOINT
-    @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@RequestBody User loginRequest) {
-        User user = userRepository.findByUsername(loginRequest.getUsername());
+    @PostMapping(
+        path = "/login",
+        consumes = MediaType.APPLICATION_JSON_VALUE,
+        produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
+        String username = body.get("username");
+        String password = body.get("password");
 
-        if (user == null) {
+        User user = userRepository.findByUsername(username);
+        if (user == null || !user.getPassword().equals(password)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body("Invalid username or password");
         }
-
-        // Check password match
-        if (!user.getPassword().equals(loginRequest.getPassword())) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Invalid username or password");
-        }
-
-        // Return the full user object (includes role)
         return ResponseEntity.ok(user);
     }
+
+
+    
 }
