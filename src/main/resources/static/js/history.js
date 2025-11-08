@@ -10,13 +10,13 @@ if (!user || user.role !== "CUSTOMER") {
 // Navbar setup
 const navAuth = document.getElementById("nav-auth");
 navAuth.innerHTML = `
-  <li><a href="customer.html"><span class="glyphicon glyphicon-book"></span> My Books</a></li>
+  <li><a href="borrow-book.html"><span class="glyphicon glyphicon-book"></span> My Books</a></li>
   <li><a><span class="glyphicon glyphicon-user"></span> ${user.username} (${user.role})</a></li>
   <li><a href="#" id="logout-btn"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
 `;
 document.getElementById("logout-btn").addEventListener("click", () => {
   localStorage.removeItem("user");
-  window.location.href = "index.html";
+  window.location.href = "home.html";
 });
 
 // Load user's transaction history

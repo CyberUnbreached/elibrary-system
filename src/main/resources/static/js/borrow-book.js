@@ -15,7 +15,7 @@ navAuth.innerHTML = `
 `;
 document.getElementById("logout-btn").addEventListener("click", () => {
   localStorage.removeItem("user");
-  window.location.href = "index.html";
+  window.location.href = "home.html";
 });
 
 // Load all books

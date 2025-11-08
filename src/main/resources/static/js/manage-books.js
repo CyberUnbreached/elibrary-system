@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Restrict access to staff only
   if (!user || user.role !== "STAFF") {
     alert("Access denied. Staff only.");
-    window.location.href = "index.html";
+    window.location.href = "home.html";
     return;
   }
 
@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("staff-username").textContent = `${user.username} (${user.role})`;
   document.getElementById("logout-btn").addEventListener("click", () => {
     localStorage.removeItem("user");
-    window.location.href = "index.html";
+    window.location.href = "home.html";
   });
 
   // ✅ Alert helper

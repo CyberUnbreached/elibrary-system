@@ -5,7 +5,7 @@ const user = JSON.parse(localStorage.getItem("user"));
 // Restrict access to staff only
 if (!user || user.role !== "STAFF") {
   alert("Access denied. Staff only.");
-  window.location.href = "index.html";
+  window.location.href = "home.html";
 }
 
 // Navbar setup
@@ -18,7 +18,7 @@ navAuth.innerHTML = `
 `;
 document.getElementById("logout-btn").addEventListener("click", () => {
   localStorage.removeItem("user");
-  window.location.href = "index.html";
+  window.location.href = "home.html";
 });
 
 // --- 1️⃣ Load Book Statistics ---
