@@ -9,7 +9,7 @@ if (!user || user.role !== "CUSTOMER") {
 // Navbar
 const navAuth = document.getElementById("nav-auth");
 navAuth.innerHTML = `
-  <li><a href="history.html"><span class="glyphicon glyphicon-time"></span> History</a></li>
+  <li><a href="customer-transactions.html"><span class="glyphicon glyphicon-time"></span> History</a></li>
   <li><a><span class="glyphicon glyphicon-user"></span> ${user.username} (${user.role})</a></li>
   <li><a href="#" id="logout-btn"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
 `;

@@ -10,7 +10,7 @@ if (!user || user.role !== "CUSTOMER") {
 // Navbar setup
 const navAuth = document.getElementById("nav-auth");
 navAuth.innerHTML = `
-  <li><a href="borrow-book.html"><span class="glyphicon glyphicon-book"></span> My Books</a></li>
+  <li><a href="borrow-book.html"><span class="glyphicon glyphicon-book"></span> Book Lending</a></li>
   <li><a><span class="glyphicon glyphicon-user"></span> ${user.username} (${user.role})</a></li>
   <li><a href="#" id="logout-btn"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
 `;
@@ -22,7 +22,7 @@ document.getElementById("logout-btn").addEventListener("click", () => {
 // Load user's transaction history
 async function loadTransactions() {
   try {
-    // ✅ Fetch transactions for this specific user only
+    // Fetch transactions for this specific user only
     const res = await fetch(`${apiBase}/transactions/user/${user.id}`);
     const transactions = await res.json();
 
@@ -36,7 +36,7 @@ async function loadTransactions() {
 
     transactions.forEach(t => {
       const tr = document.createElement("tr");
-      const status = t.returned ? "✅ Returned" : "📘 Borrowed";
+      const status = t.returned ? "Returned" : "Borrowed";
 
       tr.innerHTML = `
         <td>${t.book ? t.book.title : "Unknown Book"}</td>
@@ -55,3 +55,4 @@ async function loadTransactions() {
 }
 
 window.onload = loadTransactions;
+
