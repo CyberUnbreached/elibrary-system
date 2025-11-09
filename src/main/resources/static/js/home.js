@@ -66,7 +66,7 @@ async function loadBooks(searchTerm = "") {
       <td>${book.title}</td>
       <td>${book.author}</td>
       <td>${book.genre}</td>
-      <td>${book.available ? "�o. Available" : "�?O Checked Out"}</td>
+      <td>${book.available ? "✅ Available" : "❌ Checked Out"}</td>
     `;
     tbody.appendChild(tr);
   });
