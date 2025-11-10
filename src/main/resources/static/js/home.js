@@ -1,48 +1,8 @@
 const apiBase = "https://elibrary-system.onrender.com";
 const user = JSON.parse(localStorage.getItem("user"));
 
-// Navbar setup
-const navAuth = document.getElementById("nav-auth");
-
-if (user) {
-  // --- If logged in as STAFF ---
-  if (user.role === "STAFF") {
-    navAuth.innerHTML = `
-      <li><a href="staff.html"><span class="glyphicon glyphicon-dashboard"></span> Dashboard</a></li>
-      <li><a href="manage-books.html"><span class="glyphicon glyphicon-book"></span> Manage Books</a></li>
-      <li><a><span class="glyphicon glyphicon-user"></span> ${user.username} (${user.role})</a></li>
-      <li><a href="#" id="logout-btn"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
-    `;
-  } 
-  // --- If logged in as CUSTOMER ---
-  else if (user.role === "CUSTOMER") {
-    navAuth.innerHTML = `
-      <li><a href="borrow-book.html"><span class="glyphicon glyphicon-book"></span> Book Lending</a></li>
-      <li><a href="customer-transactions.html"><span class="glyphicon glyphicon-time"></span> History</a></li>
-      <li><a><span class="glyphicon glyphicon-user"></span> ${user.username} (${user.role})</a></li>
-      <li><a href="#" id="logout-btn"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
-    `;
-  } 
-  // --- Fallback for unknown roles ---
-  else {
-    navAuth.innerHTML = `
-      <li><a><span class="glyphicon glyphicon-user"></span> ${user.username}</a></li>
-      <li><a href="#" id="logout-btn"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
-    `;
-  }
-
-  // Logout event
-  document.getElementById("logout-btn").addEventListener("click", () => {
-    localStorage.removeItem("user");
-    window.location.reload(); // refresh the homepage
-  });
-
-} else {
-  // --- If not logged in ---
-  navAuth.innerHTML = `
-    <li><a href="login.html"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
-  `;
-}
+// Navbar
+if (typeof renderNav === 'function') { renderNav(); }
 
 // --- Load Books Function ---
 async function loadBooks(searchTerm = "") {

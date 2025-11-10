@@ -7,19 +7,8 @@ if (!user || user.role !== "STAFF") {
   window.location.href = "home.html";
 }
 
-// Navbar setup
-const navAuth = document.getElementById("nav-auth");
-navAuth.innerHTML = `
-  <li><a href="staff.html"><span class="glyphicon glyphicon-dashboard"></span> Dashboard</a></li>
-  <li><a href="manage-books.html"><span class="glyphicon glyphicon-book"></span> Manage Books</a></li>
-  <li class="active"><a href="overdue.html"><span class="glyphicon glyphicon-warning-sign"></span> Overdue</a></li>
-  <li><a><span class="glyphicon glyphicon-user"></span> ${user.username} (${user.role})</a></li>
-  <li><a href="#" id="logout-btn"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
-`;
-document.getElementById("logout-btn").addEventListener("click", () => {
-  localStorage.removeItem("user");
-  window.location.href = "home.html";
-});
+// Navbar
+if (typeof renderNav === 'function') { renderNav(); }
 
 function formatDate(s) {
   if (!s) return "-";

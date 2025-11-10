@@ -12,12 +12,8 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  // Navbar setup
-  document.getElementById("staff-username").textContent = `${user.username} (${user.role})`;
-  document.getElementById("logout-btn").addEventListener("click", () => {
-    localStorage.removeItem("user");
-    window.location.href = "home.html";
-  });
+  // Navbar
+  if (typeof renderNav === 'function') { renderNav(); }
 
   // ✅ Alert helper
   function showAlert(type, message) {

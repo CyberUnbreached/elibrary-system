@@ -7,17 +7,8 @@ if (!user || user.role !== "CUSTOMER") {
   window.location.href = "login.html";
 }
 
-// Navbar setup
-const navAuth = document.getElementById("nav-auth");
-navAuth.innerHTML = `
-  <li><a href="borrow-book.html"><span class="glyphicon glyphicon-book"></span> Book Lending</a></li>
-  <li><a><span class="glyphicon glyphicon-user"></span> ${user.username} (${user.role})</a></li>
-  <li><a href="#" id="logout-btn"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
-`;
-document.getElementById("logout-btn").addEventListener("click", () => {
-  localStorage.removeItem("user");
-  window.location.href = "home.html";
-});
+// Navbar
+if (typeof renderNav === 'function') { renderNav(); }
 
 // Load user's transaction history
 async function loadTransactions() {
@@ -55,4 +46,3 @@ async function loadTransactions() {
 }
 
 window.onload = loadTransactions;
-

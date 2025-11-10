@@ -8,19 +8,8 @@ if (!user || user.role !== "CUSTOMER") {
   window.location.href = "login.html";
 }
 
-// Navbar setup (match your other pages)
-const navAuth = document.getElementById("nav-auth");
-navAuth.innerHTML = `
-  <li><a href="customer.html"><span class="glyphicon glyphicon-book"></span> My Books</a></li>
-  <li><a href="history.html"><span class="glyphicon glyphicon-time"></span> History</a></li>
-  <li class="active"><a href="purchase-book.html"><span class="glyphicon glyphicon-shopping-cart"></span> Purchase</a></li>
-  <li><a><span class="glyphicon glyphicon-user"></span> ${user.username} (${user.role})</a></li>
-  <li><a href="#" id="logout-btn"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
-`;
-document.getElementById("logout-btn").addEventListener("click", () => {
-  localStorage.removeItem("user");
-  window.location.href = "index.html";
-});
+// Navbar
+if (typeof renderNav === 'function') { renderNav(); }
 
 // State for selected book
 let selectedBook = null;
