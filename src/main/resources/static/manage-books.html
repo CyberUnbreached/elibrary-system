@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Books | E-Library</title>
+
+  <!-- Bootstrap + jQuery -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-default">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <a class="navbar-brand" href="home.html">
+          <span class="glyphicon glyphicon-home"></span> E-Library
+        </a>
+      </div>
+      <ul class="nav navbar-nav navbar-right" id="nav-auth">
+        <li><a href="staff.html"><span class="glyphicon glyphicon-dashboard"></span> Staff Dashboard</a></li>
+        <li><a id="staff-username"></a></li>
+        <li><a href="#" id="logout-btn"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div id="alert-container"></div>
+
+    <div class="page-header text-center">
+      <h2 class="text-primary">📘 Manage Library Books</h2>
+      <p class="text-muted">Add new books, update records, or remove outdated entries.</p>
+    </div>
+
+    <!-- Add Book -->
+    <div class="panel panel-primary">
+      <div class="panel-heading"><strong>Add New Book</strong></div>
+      <div class="panel-body">
+        <form id="add-book-form" class="form-inline text-center">
+          <div class="form-group">
+            <input type="text" id="title" class="form-control" placeholder="Title" required>
+          </div>
+          <div class="form-group">
+            <input type="text" id="author" class="form-control" placeholder="Author" required>
+          </div>
+          <div class="form-group">
+            <input type="text" id="genre" class="form-control" placeholder="Genre" required>
+          </div>
+          <button type="submit" class="btn btn-success">
+            <span class="glyphicon glyphicon-plus"></span> Add Book
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Books Table -->
+    <div class="panel panel-default">
+      <div class="panel-heading"><strong>All Books in Catalog</strong></div>
+      <div class="panel-body">
+        <table class="table table-striped table-hover">
+          <thead>
+            <tr class="info">
+              <th>Title</th>
+              <th>Author</th>
+              <th>Genre</th>
+              <th>Available</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="books-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <footer class="text-center" style="margin-top:40px; padding:15px; background-color:#f8f9fa;">
+    <p>Team Codex © 2025 – E-Library System</p>
+  </footer>
+
+  <script src="js/manage-books.js"></script>
+</body>
+</html>

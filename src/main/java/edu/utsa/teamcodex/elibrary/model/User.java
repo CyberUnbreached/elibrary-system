@@ -1,9 +1,11 @@
 package edu.utsa.teamcodex.elibrary.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+import java.util.List;
 
 @Entity
-@Table(name = "users")  // 'user' is a reserved keyword in PostgreSQL
+@Table(name = "users") // 'user' is reserved in PostgreSQL
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -13,7 +15,14 @@ public class User {
     private String email;
     private String role;
 
-    // Constructors
+    @OneToMany(mappedBy = "borrowedBy", cascade = CascadeType.ALL)
+    @JsonManagedReference("user-books")
+    private List<Book> borrowedBooks;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @JsonManagedReference("user-transactions")
+    private List<Transaction> transactions;
+
     public User() {}
 
     public User(String username, String password, String email, String role) {
@@ -23,7 +32,7 @@ public class User {
         this.role = role;
     }
 
-    // Getters & Setters
+    // Getters and setters
     public Long getId() { return id; }
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
@@ -33,4 +42,6 @@ public class User {
     public void setEmail(String email) { this.email = email; }
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
+    public List<Book> getBorrowedBooks() { return borrowedBooks; }
+    public List<Transaction> getTransactions() { return transactions; }
 }
