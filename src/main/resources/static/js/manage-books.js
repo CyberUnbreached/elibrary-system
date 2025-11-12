@@ -1,6 +1,11 @@
 // manage-books.js
 const apiBase = "https://elibrary-system.onrender.com";
 
+function formatPrice(v) {
+  if (v === undefined || v === null || isNaN(Number(v))) return "-";
+  return `$${Number(v).toFixed(2)}`;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const user = JSON.parse(localStorage.getItem("user"));
   const alertContainer = document.getElementById("alert-container");
@@ -61,6 +66,83 @@ document.addEventListener("DOMContentLoaded", () => {
             showAlert("danger", "Failed to delete book.");
           }
         }
+      });
+    });
+
+    // Inject price cells and edit buttons for each row
+    Array.from(document.querySelectorAll('#books-body tr')).forEach((tr, i) => {
+      const tds = tr.querySelectorAll('td');
+      if (tds.length >= 5 && !tr.querySelector('.book-price')) {
+        const priceTd = document.createElement('td');
+        priceTd.className = 'book-price';
+        // books[i] corresponds to this row since we rendered in order
+        const book = (typeof books !== 'undefined' && Array.isArray(books)) ? books[i] : null;
+        priceTd.textContent = formatPrice(book && book.price);
+        // Insert before the Available cell (index 3 originally)
+        tr.insertBefore(priceTd, tds[3]);
+
+        // Prepend Edit button in Actions cell
+        const actionsCell = tr.lastElementChild;
+        const id = book && book.id;
+        if (actionsCell && id != null && !actionsCell.querySelector('.edit-price-btn')) {
+          const editBtn = document.createElement('button');
+          editBtn.className = 'btn btn-default btn-sm edit-price-btn';
+          editBtn.setAttribute('data-id', id);
+          editBtn.innerHTML = '<span class="glyphicon glyphicon-pencil"></span> Edit Price';
+          actionsCell.insertBefore(editBtn, actionsCell.firstChild);
+        }
+      }
+    });
+
+    // Bind edit price interactions
+    document.querySelectorAll('.edit-price-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const tr = btn.closest('tr');
+        const priceCell = tr.querySelector('.book-price');
+        const actionsCell = tr.querySelector('td:last-child');
+        const currentText = (priceCell ? priceCell.textContent.trim() : '');
+        const currentVal = (currentText && currentText.startsWith('$')) ? currentText.slice(1) : currentText;
+        const currentPrice = parseFloat(currentVal) || 0;
+
+        if (priceCell) priceCell.innerHTML = '<input type="number" class="form-control input-sm price-input" min="0" step="0.01" value="' + currentPrice + '">';
+        if (actionsCell) actionsCell.innerHTML = '<button class="btn btn-primary btn-sm save-price-btn" data-id="' + id + '"><span class="glyphicon glyphicon-ok"></span> Save</button> <button class="btn btn-default btn-sm cancel-price-btn" data-id="' + id + '"><span class="glyphicon glyphicon-remove"></span> Cancel</button> <button class="btn btn-danger btn-sm delete-btn" data-id="' + id + '"><span class="glyphicon glyphicon-trash"></span> Delete</button>';
+
+        const saveBtn = tr.querySelector('.save-price-btn');
+        const cancelBtn = tr.querySelector('.cancel-price-btn');
+        const priceInput = tr.querySelector('.price-input');
+
+        if (saveBtn) saveBtn.addEventListener('click', async () => {
+          const newPrice = parseFloat(priceInput.value);
+          if (isNaN(newPrice) || newPrice < 0) { showAlert('warning', 'Please enter a valid non-negative price.'); return; }
+          try {
+            const resGet = await fetch(`${apiBase}/books/${id}`);
+            const bookObj = await resGet.json();
+            const payload = Object.assign({}, bookObj, { price: newPrice });
+            const res = await fetch(`${apiBase}/books/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            if (!res.ok) { const text = await res.text(); showAlert('danger', 'Failed to update price: ' + text); return; }
+            showAlert('success', 'Price updated.');
+            loadBooks();
+          } catch (err) {
+            console.error('Error updating price:', err);
+            showAlert('danger', 'Network error updating price.');
+          }
+        });
+
+        if (cancelBtn) cancelBtn.addEventListener('click', () => {
+          if (priceCell) priceCell.textContent = formatPrice(currentPrice);
+          if (actionsCell) actionsCell.innerHTML = '<button class="btn btn-default btn-sm edit-price-btn" data-id="' + id + '"><span class="glyphicon glyphicon-pencil"></span> Edit Price</button> <button class="btn btn-danger btn-sm delete-btn" data-id="' + id + '"><span class="glyphicon glyphicon-trash"></span> Delete</button>';
+          const rebEdit = tr.querySelector('.edit-price-btn');
+          const rebDel = tr.querySelector('.delete-btn');
+          if (rebEdit) rebEdit.addEventListener('click', () => btn.click());
+          if (rebDel) rebDel.addEventListener('click', async () => {
+            if (confirm('Are you sure you want to delete this book?')) {
+              const res = await fetch(`${apiBase}/books/${id}`, { method: 'DELETE' });
+              if (res.ok) { showAlert('success', 'Book deleted successfully!'); loadBooks(); }
+              else { showAlert('danger', 'Failed to delete book.'); }
+            }
+          });
+        });
       });
     });
   }
