@@ -68,7 +68,7 @@ function openPurchaseModal(bookId, sourceList) {
   $("#purchaseModal").modal("show");
 }
 
-// Submit purchase
+// Submit add-to-cart
 document.getElementById("purchase-form").addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -80,33 +80,20 @@ document.getElementById("purchase-form").addEventListener("submit", async (e) =>
     return;
   }
 
-  const payload = {
-    user: { id: user.id },
-    book: { id: selectedBook.id },
-    quantity: qty,
-    // Let backend set purchaseDate; if needed from client:
-    purchaseDate: new Date().toISOString().split("T")[0]
-  };
-
   try {
-    const res = await fetch(`${apiBase}/purchases`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
+    const res = await fetch(`${apiBase}/cart/${user.id}/add/${selectedBook.id}?quantity=${qty}`, { method: "POST" });
 
     if (!res.ok) {
       const text = await res.text();
-      showAlert("danger", `Purchase failed: ${text}`);
+      showAlert("danger", `Add to cart failed: ${text}`);
       return;
     }
 
     $("#purchaseModal").modal("hide");
-    showAlert("success", "Purchase recorded successfully!");
-    loadPurchases();
+    showAlert("success", "Added to cart. <a href=\"customer-cart.html\">View cart</a>.");
   } catch (err) {
     console.error(err);
-    showAlert("danger", "Network error while purchasing.");
+    showAlert("danger", "Network error while adding to cart.");
   }
 });
 

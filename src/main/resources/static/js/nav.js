@@ -19,7 +19,8 @@
       links = [
         { href: 'borrow-book.html', text: 'Book Lending', icon: 'glyphicon-book' },
         { href: 'customer-transactions.html', text: 'History', icon: 'glyphicon-time' },
-        { href: 'purchase-book.html', text: 'Purchase', icon: 'glyphicon-shopping-cart' }
+        { href: 'purchase-book.html', text: 'Purchase', icon: 'glyphicon-usd' },
+        { href: 'customer-cart.html', text: 'Cart', icon: 'glyphicon-shopping-cart' }
       ];
     } else if (user.role === 'STAFF') {
       links = [
@@ -72,4 +73,3 @@
     renderNav();
   }
 })();
-
