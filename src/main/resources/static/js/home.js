@@ -4,6 +4,11 @@ const user = JSON.parse(localStorage.getItem("user"));
 // Navbar
 if (typeof renderNav === 'function') { renderNav(); }
 
+function formatPrice(v) {
+  if (v === undefined || v === null || isNaN(Number(v))) return "-";
+  return `$${Number(v).toFixed(2)}`;
+}
+
 // --- Load Books Function ---
 async function loadBooks(searchTerm = "") {
   const res = await fetch(`${apiBase}/books`);
@@ -28,6 +33,7 @@ async function loadBooks(searchTerm = "") {
       <td>${book.genre}</td>
       <td>${book.available ? "✅ Available" : "❌ Checked Out"}</td>
     `;
+    tr.querySelectorAll('td')[2].insertAdjacentHTML('afterend', '<td>' + formatPrice(book.price) + '</td>');
     tbody.appendChild(tr);
   });
 }
