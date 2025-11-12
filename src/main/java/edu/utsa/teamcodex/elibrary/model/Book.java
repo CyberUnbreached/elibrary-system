@@ -15,6 +15,7 @@ public class Book {
     private String genre;
     private boolean available = true;
     private LocalDate dueDate;
+    private double price;
 
     @ManyToOne
     @JoinColumn(name = "borrowed_by_id")
@@ -34,7 +35,8 @@ public class Book {
     public void setAvailable(boolean available) { this.available = available; }
     public LocalDate getDueDate() { return dueDate; }
     public void setDueDate(LocalDate dueDate) { this.dueDate = dueDate; }
-
+    public double getPrice() { return price; }
+    public void setPrice(double price) { this.price = price;}
     public User getBorrowedBy() { return borrowedBy; }
     public void setBorrowedBy(User borrowedBy) { this.borrowedBy = borrowedBy; }
 }
