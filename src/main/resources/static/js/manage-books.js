@@ -116,13 +116,28 @@ document.addEventListener("DOMContentLoaded", () => {
           const newPrice = parseFloat(priceInput.value);
           if (isNaN(newPrice) || newPrice < 0) { showAlert('warning', 'Please enter a valid non-negative price.'); return; }
           try {
-            const resGet = await fetch(`${apiBase}/books/${id}`);
+            const resGet = await fetch(`${apiBase}/books/${id}`, { headers: { 'Accept': 'application/json' } });
             const bookObj = await resGet.json();
-            const payload = Object.assign({}, bookObj, { price: newPrice });
-            let res = await fetch(`${apiBase}/books/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            if (res.status === 405) {
-              // Fallback for servers that use POST upsert for updates
-              res = await fetch(`${apiBase}/books`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            const payload = {
+              id: bookObj.id,
+              title: bookObj.title,
+              author: bookObj.author,
+              genre: bookObj.genre,
+              available: !!bookObj.available,
+              price: newPrice
+            };
+            let res = await fetch(`${apiBase}/books/${id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+            if (res.status === 405 || res.status === 415 || res.status === 404) {
+              // Fallback: some servers update via POST upsert
+              res = await fetch(`${apiBase}/books`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify(payload)
+              });
             }
             if (!res.ok) { const text = await res.text(); showAlert('danger', 'Failed to update price: ' + text); return; }
             showAlert('success', 'Price updated.');
