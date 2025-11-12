@@ -38,6 +38,27 @@ public class BookController {
     public Book addBook(@RequestBody Book book) {
         return bookRepository.save(book);
     }
+    @GetMapping("/{id}")
+    public ResponseEntity<Book> getBookById(@PathVariable Long id) {
+        return bookRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Book> updateBook(@PathVariable Long id, @RequestBody Book incoming) {
+        return bookRepository.findById(id)
+                .map(existing -> {
+                    existing.setTitle(incoming.getTitle());
+                    existing.setAuthor(incoming.getAuthor());
+                    existing.setGenre(incoming.getGenre());
+                    existing.setPrice(incoming.getPrice());
+                    existing.setAvailable(incoming.isAvailable());
+                    Book saved = bookRepository.save(existing);
+                    return ResponseEntity.ok(saved);
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
 
     // 📖 Borrow a book (customer)
     @PutMapping("/{bookId}/borrow/{userId}")

@@ -119,7 +119,11 @@ document.addEventListener("DOMContentLoaded", () => {
             const resGet = await fetch(`${apiBase}/books/${id}`);
             const bookObj = await resGet.json();
             const payload = Object.assign({}, bookObj, { price: newPrice });
-            const res = await fetch(`${apiBase}/books/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            let res = await fetch(`${apiBase}/books/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            if (res.status === 405) {
+              // Fallback for servers that use POST upsert for updates
+              res = await fetch(`${apiBase}/books`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            }
             if (!res.ok) { const text = await res.text(); showAlert('danger', 'Failed to update price: ' + text); return; }
             showAlert('success', 'Price updated.');
             loadBooks();
