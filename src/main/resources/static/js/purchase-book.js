@@ -97,38 +97,6 @@ document.getElementById("purchase-form").addEventListener("submit", async (e) =>
   }
 });
 
-// Load user's purchases
-async function loadPurchases() {
-  try {
-    const res = await fetch(`${apiBase}/purchases/user/${user.id}`);
-    const purchases = await res.json();
-    const tbody = document.getElementById("purchases-body");
-    tbody.innerHTML = "";
-
-    if (!purchases || purchases.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">No purchases yet.</td></tr>`;
-      return;
-    }
-
-    // most recent first (assuming higher id is newer)
-    purchases.sort((a, b) => b.id - a.id);
-
-    purchases.forEach(p => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${p.book ? p.book.title : "Unknown Book"}</td>
-        <td>${p.book ? p.book.author : "-"}</td>
-        <td>${p.quantity || 1}</td>
-        <td>${p.purchaseDate || "-"}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-  } catch (err) {
-    console.error(err);
-    document.getElementById("purchases-body").innerHTML =
-      `<tr><td colspan="4" class="text-center text-danger">Failed to load purchases.</td></tr>`;
-  }
-}
 
 // Search
 document.getElementById("search-box").addEventListener("input", (e) => {
@@ -138,5 +106,4 @@ document.getElementById("search-box").addEventListener("input", (e) => {
 // Init
 window.onload = function () {
   loadBooks();
-  loadPurchases();
 };
