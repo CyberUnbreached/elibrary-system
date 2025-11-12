@@ -73,8 +73,14 @@ document.addEventListener("DOMContentLoaded", () => {
       title: document.getElementById("title").value.trim(),
       author: document.getElementById("author").value.trim(),
       genre: document.getElementById("genre").value.trim(),
+      price: parseFloat(document.getElementById("price").value.trim()),
       available: true
     };
+
+    if (isNaN(newBook.price) || newBook.price < 0) {
+      showAlert("warning", "Please enter a valid non-negative price.");
+      return;
+    }
 
     const res = await fetch(`${apiBase}/books`, {
       method: "POST",
