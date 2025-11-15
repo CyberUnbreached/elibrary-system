@@ -29,7 +29,7 @@ async function loadBooks(searchTerm = "") {
   );
 
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">No books found.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No books found.</td></tr>`;
     return;
   }
 
@@ -39,6 +39,7 @@ async function loadBooks(searchTerm = "") {
       <td>${book.title}</td>
       <td>${book.author}</td>
       <td>${book.genre}</td>
+      <td>${typeof book.price === 'number' ? `$${book.price.toFixed(2)}` : '-'}</td>
       <td class="text-center">
         <button class="btn btn-primary btn-sm" data-book-id="${book.id}">
           <span class="glyphicon glyphicon-shopping-cart"></span> Buy
