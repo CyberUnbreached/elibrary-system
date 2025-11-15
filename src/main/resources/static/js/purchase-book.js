@@ -1,4 +1,3 @@
-// purchase-book.js
 const apiBase = "https://elibrary-system.onrender.com";
 const user = JSON.parse(localStorage.getItem("user"));
 
@@ -13,12 +12,6 @@ if (typeof renderNav === 'function') { renderNav(); }
 
 // State for selected book
 let selectedBook = null;
-
-// Format helpers
-function formatPrice(val) {
-  const n = Number(val);
-  return Number.isFinite(n) ? ('$' + n.toFixed(2)) : '-';
-}
 
 // Load books
 async function loadBooks(searchTerm = "") {
@@ -41,12 +34,11 @@ async function loadBooks(searchTerm = "") {
 
   filtered.forEach(book => {
     const tr = document.createElement("tr");
-    const priceCell = formatPrice(book.price);
     tr.innerHTML = `
       <td>${book.title}</td>
       <td>${book.author}</td>
       <td>${book.genre}</td>
-      <td class="text-right">${priceCell}</td>
+      <td class="text-right">$${Number(book.price).toFixed(2)}</td>
       <td class="text-center">
         <button class="btn btn-primary btn-sm" data-book-id="${book.id}">
           <span class="glyphicon glyphicon-shopping-cart"></span> Buy
@@ -89,7 +81,10 @@ document.getElementById("purchase-form").addEventListener("submit", async (e) =>
   }
 
   try {
-    const res = await fetch(`${apiBase}/cart/${user.id}/add/${selectedBook.id}?quantity=${qty}`, { method: "POST" });
+    const res = await fetch(
+      `${apiBase}/cart/${user.id}/add/${selectedBook.id}?quantity=${qty}`,
+      { method: "POST" }
+    );
 
     if (!res.ok) {
       const text = await res.text();
@@ -104,7 +99,6 @@ document.getElementById("purchase-form").addEventListener("submit", async (e) =>
     showAlert("danger", "Network error while adding to cart.");
   }
 });
-
 
 // Search
 document.getElementById("search-box").addEventListener("input", (e) => {
