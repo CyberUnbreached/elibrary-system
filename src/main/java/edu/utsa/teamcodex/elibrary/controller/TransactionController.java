@@ -6,6 +6,7 @@ import edu.utsa.teamcodex.elibrary.repository.UserRepository;
 import edu.utsa.teamcodex.elibrary.repository.BookRepository;
 import edu.utsa.teamcodex.elibrary.model.User;
 import edu.utsa.teamcodex.elibrary.model.Book;
+
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -18,40 +19,39 @@ public class TransactionController {
     private final UserRepository userRepository;
     private final BookRepository bookRepository;
 
-    public TransactionController(TransactionRepository transactionRepository, UserRepository userRepository, BookRepository bookRepository) {
+    public TransactionController(
+            TransactionRepository transactionRepository,
+            UserRepository userRepository,
+            BookRepository bookRepository) {
         this.transactionRepository = transactionRepository;
         this.userRepository = userRepository;
         this.bookRepository = bookRepository;
     }
 
+    // Return all transactions with full user + book objects
     @GetMapping
     public List<Transaction> getAllTransactions() {
-        List<Transaction> transactions = transactionRepository.findAll();
-        transactions.forEach(t -> {
-            if (t.getUser() != null) t.getUser().getUsername(); // force initialization
-            if (t.getBook() != null) t.getBook().getTitle();
-        });
-        return transactions;
+        return transactionRepository.findAll();
     }
 
-
+    // Return all transactions for the given user
     @GetMapping("/user/{userId}")
     public List<Transaction> getTransactionsByUser(@PathVariable Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        return transactionRepository.findAll().stream()
-                .filter(t -> t.getUser() != null && t.getUser().getId().equals(user.getId()))
-                .toList();
+        return transactionRepository.findByUserId(userId);
     }
 
+    // Create new transaction
     @PostMapping
     public Transaction createTransaction(@RequestBody Transaction transaction) {
+
+        // Resolve user entity
         if (transaction.getUser() != null && transaction.getUser().getId() != null) {
             User user = userRepository.findById(transaction.getUser().getId())
                     .orElseThrow(() -> new RuntimeException("User not found"));
             transaction.setUser(user);
         }
 
+        // Resolve book entity
         if (transaction.getBook() != null && transaction.getBook().getId() != null) {
             Book book = bookRepository.findById(transaction.getBook().getId())
                     .orElseThrow(() -> new RuntimeException("Book not found"));

@@ -1,6 +1,6 @@
 package edu.utsa.teamcodex.elibrary.model;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDate;
@@ -12,14 +12,15 @@ public class Transaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Correct: Transaction is the "child" in the User → Transaction relationship
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
-    @JsonBackReference("user-transactions")
+    @JsonManagedReference("user-transactions")
     private User user;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "book_id")
-    @JsonIgnoreProperties({"borrowedBy"})  // Prevent loop through book.borrowedBy
+    @JsonIgnoreProperties({"borrowedBy"})  // prevent recursion
     private Book book;
 
     private LocalDate borrowDate;

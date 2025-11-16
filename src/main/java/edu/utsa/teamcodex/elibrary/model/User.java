@@ -3,6 +3,7 @@ package edu.utsa.teamcodex.elibrary.model;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -21,13 +22,15 @@ public class User {
     private String email;
     private String role;
 
-    @OneToMany(mappedBy = "borrowedBy", cascade = CascadeType.ALL)
+    // Books borrowed by this user
+    @OneToMany(mappedBy = "borrowedBy", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference("user-books")
-    private List<Book> borrowedBooks;
+    private List<Book> borrowedBooks = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    // Transactions for this user
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference("user-transactions")
-    private List<Transaction> transactions;
+    private List<Transaction> transactions = new ArrayList<>();
 
     public User() {}
 
@@ -54,5 +57,8 @@ public class User {
     public void setRole(String role) { this.role = role; }
 
     public List<Book> getBorrowedBooks() { return borrowedBooks; }
+    public void setBorrowedBooks(List<Book> borrowedBooks) { this.borrowedBooks = borrowedBooks; }
+
     public List<Transaction> getTransactions() { return transactions; }
+    public void setTransactions(List<Transaction> transactions) { this.transactions = transactions; }
 }
