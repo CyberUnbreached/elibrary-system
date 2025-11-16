@@ -179,7 +179,7 @@ function renderBorrowTransactionsEnhanced() {
 
   sorted.forEach(t => {
     const tr = document.createElement('tr');
-    const status = t.returned ? 'Returned' : 'Borrowed';
+    const status = t.returned ? '✅ Returned' : '📘Borrowed';
     tr.innerHTML = `
       <td>${t.book ? t.book.title : 'Unknown Book'}</td>
       <td>${t.user ? t.user.username : 'Unknown User'}</td>
