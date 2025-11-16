@@ -27,9 +27,9 @@ public class User {
     @JsonManagedReference("user-books")
     private List<Book> borrowedBooks = new ArrayList<>();
 
-    // Transactions for this user
+    // IMPORTANT: Do NOT serialize transactions (prevents infinite recursion)
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference("user-transactions")
+    @JsonIgnore
     private List<Transaction> transactions = new ArrayList<>();
 
     public User() {}
@@ -41,7 +41,6 @@ public class User {
         this.role = role;
     }
 
-    // Getters and setters
     public Long getId() { return id; }
 
     public String getUsername() { return username; }
@@ -59,6 +58,7 @@ public class User {
     public List<Book> getBorrowedBooks() { return borrowedBooks; }
     public void setBorrowedBooks(List<Book> borrowedBooks) { this.borrowedBooks = borrowedBooks; }
 
+    @JsonIgnore // prevents getter-based serialization too
     public List<Transaction> getTransactions() { return transactions; }
     public void setTransactions(List<Transaction> transactions) { this.transactions = transactions; }
 }
