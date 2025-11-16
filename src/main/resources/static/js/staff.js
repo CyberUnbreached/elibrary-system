@@ -115,4 +115,34 @@ document.getElementById("search-user-btn").addEventListener("click", searchUser)
 window.onload = function() {
   loadBookStats();
   loadRecentTransactions();
+  if (typeof loadRecentPurchases === 'function') {
+    loadRecentPurchases();
+  }
 };
+
+// --- Load Recent Purchases ---
+async function loadRecentPurchases() {
+  const res = await fetch(`${apiBase}/purchases`);
+  const purchases = await res.json();
+  const tbody = document.getElementById("recent-purchases-body");
+
+  tbody.innerHTML = "";
+
+  if (!purchases || purchases.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">No purchases available.</td></tr>`;
+    return;
+  }
+
+  const sorted = purchases.sort((a, b) => b.id - a.id).slice(0, 10);
+
+  sorted.forEach(p => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${p.book ? p.book.title : "Unknown Book"}</td>
+      <td>${p.user ? p.user.username : "Unknown User"}</td>
+      <td>$${(p.price ?? 0).toFixed(2)}</td>
+      <td>${p.purchaseDate || "-"}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
