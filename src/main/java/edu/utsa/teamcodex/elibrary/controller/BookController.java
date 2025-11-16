@@ -56,6 +56,7 @@ public class BookController {
                     book.setAuthor(updatedBook.getAuthor());
                     book.setGenre(updatedBook.getGenre());
                     book.setPrice(updatedBook.getPrice());
+                    book.setImageUrl(updatedBook.getImageUrl());
                     book.setAvailable(updatedBook.isAvailable());
                     bookRepository.save(book);
                     return ResponseEntity.ok(book);

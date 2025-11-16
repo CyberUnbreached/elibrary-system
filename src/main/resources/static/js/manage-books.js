@@ -206,6 +206,46 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
     });
+
+    // Ensure Edit button exists in Actions cell and wire handler
+    Array.from(document.querySelectorAll('#books-body tr')).forEach((tr, i) => {
+      const book = (Array.isArray(books)) ? books[i] : null;
+      if (!book) return;
+      const tds = tr.querySelectorAll('td');
+      const actionsTd = tds[tds.length - 1];
+      if (!actionsTd) return;
+      if (!actionsTd.querySelector('.edit-btn')) {
+        const editBtn = document.createElement('button');
+        editBtn.className = 'btn btn-primary btn-sm edit-btn';
+        editBtn.setAttribute('data-id', book.id);
+        editBtn.innerHTML = '<span class="glyphicon glyphicon-edit"></span> Edit';
+        // Insert Edit button before Delete
+        actionsTd.insertBefore(editBtn, actionsTd.firstChild);
+        // Space between buttons
+        actionsTd.insertBefore(document.createTextNode(' '), editBtn.nextSibling);
+
+        editBtn.addEventListener('click', async () => {
+          try {
+            const res = await fetch(`${apiBase}/books/${book.id}`);
+            if (!res.ok) { showAlert('danger', 'Failed to load book for editing.'); return; }
+            const b = await res.json();
+            const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = (v ?? '').toString(); };
+            setVal('edit-book-id', b.id);
+            setVal('edit-available', b.available);
+            setVal('edit-title', b.title);
+            setVal('edit-author', b.author);
+            setVal('edit-genre', b.genre);
+            setVal('edit-price', (typeof b.price === 'number') ? b.price : '');
+            setVal('edit-imageUrl', b.imageUrl || '');
+            if (typeof $ !== 'undefined' && $('#editBookModal').modal) {
+              $('#editBookModal').modal('show');
+            }
+          } catch (e) {
+            showAlert('danger', 'Unexpected error loading book.');
+          }
+        });
+      }
+    });
   }
 
   // ✅ Add new book
@@ -268,4 +308,45 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Load initial books then apply filter if any
   (async () => { await loadBooks(); filterRows(mbSearch ? mbSearch.value.trim() : ''); })();
+  
+  // Save edited book from modal
+  const saveBtn = document.getElementById('save-edit-btn');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', async () => {
+      const idEl = document.getElementById('edit-book-id');
+      if (!idEl || !idEl.value) { showAlert('danger', 'Missing book id.'); return; }
+      const id = idEl.value;
+      const title = (document.getElementById('edit-title')?.value || '').trim();
+      const author = (document.getElementById('edit-author')?.value || '').trim();
+      const genre = (document.getElementById('edit-genre')?.value || '').trim();
+      const priceStr = (document.getElementById('edit-price')?.value || '').trim();
+      const imageUrl = (document.getElementById('edit-imageUrl')?.value || '').trim();
+      const availableStr = (document.getElementById('edit-available')?.value || 'true');
+      const available = ('' + availableStr) === 'true';
+
+      const price = Number(priceStr);
+      if (!title || !author || !genre || isNaN(price) || price < 0) {
+        showAlert('warning', 'Please provide valid title, author, genre, and non-negative price.');
+        return;
+      }
+
+      const payload = { title, author, genre, price, available, imageUrl };
+      const res = await fetch(`${apiBase}/books/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        if (typeof $ !== 'undefined' && $('#editBookModal').modal) {
+          $('#editBookModal').modal('hide');
+        }
+        showAlert('success', 'Book updated successfully.');
+        const term = mbSearch ? mbSearch.value.trim() : '';
+        await loadBooks();
+        filterRows(term);
+      } else {
+        showAlert('danger', 'Failed to update book.');
+      }
+    });
+  }
 });
