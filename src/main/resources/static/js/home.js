@@ -31,7 +31,7 @@ async function loadBooks(searchTerm = "") {
       <td>${book.title}</td>
       <td>${book.author}</td>
       <td>${book.genre}</td>
-      <td>${book.available ? "✅ Available" : "❌ Checked Out"}</td>
+      <td>${book.available ? "✅ Available to Borrow" : "❌ Checked Out"}</td>
     `;
     tr.querySelectorAll('td')[2].insertAdjacentHTML('afterend', '<td>' + formatPrice(book.price) + '</td>');
     tbody.appendChild(tr);
