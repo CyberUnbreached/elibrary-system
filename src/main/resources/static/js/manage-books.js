@@ -168,6 +168,41 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
     });
+
+    // Add Image and Quantity columns after price injection
+    Array.from(document.querySelectorAll('#books-body tr')).forEach((tr, i) => {
+      const book = (Array.isArray(books)) ? books[i] : null;
+      if (!book) return;
+
+      // Insert image as first column if not already present (8 cols total expected after this)
+      const firstTd = tr.querySelector('td');
+      const hasImage = firstTd && firstTd.querySelector('img');
+      if (!hasImage) {
+        const imgTd = document.createElement('td');
+        if (book.imageUrl) {
+          imgTd.innerHTML = `<img src="${book.imageUrl}" alt="${book.title || 'cover'}" style="width:50px;height:70px;object-fit:cover;border-radius:3px;">`;
+        } else {
+          imgTd.innerHTML = `<span class="text-muted">-</span>`;
+        }
+        tr.insertBefore(imgTd, tr.querySelectorAll('td')[0]);
+      }
+
+      // Ensure quantity cell exists just after the price cell
+      const cellsNow = tr.querySelectorAll('td');
+      // After inserting image, the price cell ('.book-price') should be at index 4: [Image, Title, Author, Genre, Price, Available, Actions]
+      const priceCell = tr.querySelector('.book-price');
+      if (priceCell) {
+        const qtyExisting = tr.querySelector('td.__qty');
+        if (!qtyExisting) {
+          const qtyTd = document.createElement('td');
+          qtyTd.className = '__qty';
+          qtyTd.textContent = (typeof book.quantity === 'number') ? `${book.quantity} in stock` : '-';
+          const priceIndex = Array.prototype.indexOf.call(cellsNow, priceCell);
+          const insertBeforeIndex = priceIndex >= 0 ? priceIndex + 1 : 5;
+          tr.insertBefore(qtyTd, tr.querySelectorAll('td')[insertBeforeIndex]);
+        }
+      }
+    });
   }
 
   // ✅ Add new book
@@ -205,3 +240,4 @@ document.addEventListener("DOMContentLoaded", () => {
   // ✅ Load initial books
   loadBooks();
 });
+

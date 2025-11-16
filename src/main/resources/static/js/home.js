@@ -86,7 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <td>${book.author}</td>
         <td>${book.genre}</td>
         <td>${formatPrice(book.price)}</td>
-        <td>${book.quantity ?? '-'}</td>
+        <td>${(typeof book.quantity === 'number') ? (book.quantity + ' in stock') : '-'}</td>
         <td>${availabilityText}</td>
       `;
       tbody.appendChild(tr);
