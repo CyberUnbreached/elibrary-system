@@ -45,20 +45,24 @@ public class BookController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Book> updateBook(@PathVariable Long id, @RequestBody Book incoming) {
+    @PutMapping(path = "/{id}", consumes = "application/json", produces = "application/json")
+    public ResponseEntity<Book> updateBook(
+            @PathVariable Long id,
+            @RequestBody Book updatedBook) {
+
         return bookRepository.findById(id)
-                .map(existing -> {
-                    existing.setTitle(incoming.getTitle());
-                    existing.setAuthor(incoming.getAuthor());
-                    existing.setGenre(incoming.getGenre());
-                    existing.setPrice(incoming.getPrice());
-                    existing.setAvailable(incoming.isAvailable());
-                    Book saved = bookRepository.save(existing);
-                    return ResponseEntity.ok(saved);
+                .map(book -> {
+                    book.setTitle(updatedBook.getTitle());
+                    book.setAuthor(updatedBook.getAuthor());
+                    book.setGenre(updatedBook.getGenre());
+                    book.setPrice(updatedBook.getPrice());
+                    book.setAvailable(updatedBook.isAvailable());
+                    bookRepository.save(book);
+                    return ResponseEntity.ok(book);
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
+
 
     // 📖 Borrow a book (customer)
     @PutMapping("/{bookId}/borrow/{userId}")
