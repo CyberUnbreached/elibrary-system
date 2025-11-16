@@ -14,8 +14,8 @@ public class Book {
     private String title;
     private String author;
     private String genre;
-    private boolean available = true;
 
+    private boolean available = true;
     private LocalDate dueDate;
     private double price;
 
@@ -24,7 +24,6 @@ public class Book {
     @JsonBackReference("user-books")
     private User borrowedBy;
 
-    // Getters and setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

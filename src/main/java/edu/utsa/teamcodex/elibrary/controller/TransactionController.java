@@ -28,30 +28,25 @@ public class TransactionController {
         this.bookRepository = bookRepository;
     }
 
-    // Return all transactions with full user + book objects
     @GetMapping
     public List<Transaction> getAllTransactions() {
         return transactionRepository.findAll();
     }
 
-    // Return all transactions for the given user
     @GetMapping("/user/{userId}")
-    public List<Transaction> getTransactionsByUser(@PathVariable Long userId) {
+    public List<Transaction> getUserTransactions(@PathVariable Long userId) {
         return transactionRepository.findByUserId(userId);
     }
 
-    // Create new transaction
     @PostMapping
     public Transaction createTransaction(@RequestBody Transaction transaction) {
 
-        // Resolve user entity
         if (transaction.getUser() != null && transaction.getUser().getId() != null) {
             User user = userRepository.findById(transaction.getUser().getId())
                     .orElseThrow(() -> new RuntimeException("User not found"));
             transaction.setUser(user);
         }
 
-        // Resolve book entity
         if (transaction.getBook() != null && transaction.getBook().getId() != null) {
             Book book = bookRepository.findById(transaction.getBook().getId())
                     .orElseThrow(() -> new RuntimeException("Book not found"));

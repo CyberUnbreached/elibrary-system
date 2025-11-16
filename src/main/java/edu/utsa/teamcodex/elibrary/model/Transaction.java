@@ -1,6 +1,5 @@
 package edu.utsa.teamcodex.elibrary.model;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDate;
@@ -12,15 +11,15 @@ public class Transaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Correct: Transaction is the "child" in the User → Transaction relationship
+    // User who made the transaction
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
-    @JsonManagedReference("user-transactions")
     private User user;
 
+    // Book being borrowed
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "book_id")
-    @JsonIgnoreProperties({"borrowedBy"})  // prevent recursion
+    @JsonIgnoreProperties({"borrowedBy"})  // avoid book → user → book loops
     private Book book;
 
     private LocalDate borrowDate;
@@ -36,7 +35,6 @@ public class Transaction {
         this.returnDate = returnDate;
     }
 
-    // Getters & Setters
     public Long getId() { return id; }
 
     public User getUser() { return user; }
