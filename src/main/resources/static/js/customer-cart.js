@@ -20,7 +20,22 @@ async function loadCart() {
   tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">Loading...</td></tr>`;
   try {
     const res = await fetch(`${apiBase}/cart/${user.id}`);
-    const cart = await res.json();
+    const text = await res.text();
+    if (!res.ok) {
+      console.error('Load cart failed:', text);
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Failed to load cart.</td></tr>`;
+      updateTotals(0);
+      return;
+    }
+    let cart;
+    try {
+      cart = JSON.parse(text);
+    } catch (e) {
+      console.error('Cart response not JSON:', text);
+      tbody.innerHTML = `<tr><td colspan=\"6\" class=\"text-center text-danger\">Failed to parse cart.</td></tr>`;
+      updateTotals(0);
+      return;
+    }
     const items = (cart && cart.items) ? cart.items : [];
 
     tbody.innerHTML = "";
@@ -136,4 +151,3 @@ document.getElementById('checkout-btn').addEventListener('click', async () => {
 window.onload = function () {
   loadCart();
 };
-

@@ -63,7 +63,7 @@ public class CartController {
 
     // Remove item from cart
     @DeleteMapping("/{userId}/remove/{cartItemId}")
-    public ResponseEntity<String> removeItemFromCart(@PathVariable Long cartItemId) {
+    public ResponseEntity<String> removeItemFromCart(@PathVariable Long userId, @PathVariable Long cartItemId) {
         cartItemRepository.deleteById(cartItemId);
         return ResponseEntity.ok("Item removed from cart");
     }

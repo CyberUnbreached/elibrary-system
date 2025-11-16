@@ -1,4 +1,5 @@
 package edu.utsa.teamcodex.elibrary.model;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 
 @Entity
@@ -9,6 +10,7 @@ public class CartItem {
 
     @ManyToOne
     @JoinColumn(name = "cart_id")
+    @JsonBackReference("cart-items")
     private Cart cart;
 
     @ManyToOne
