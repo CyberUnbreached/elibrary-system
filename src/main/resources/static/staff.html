@@ -60,6 +60,19 @@
     <div class="panel panel-default">
       <div class="panel-heading"><strong>Recent Borrow Transactions</strong></div>
       <div class="panel-body">
+        <div class="row" style="margin-bottom:10px;">
+          <div class="col-sm-6">
+            <label for="borrow-sort-by" class="control-label" style="margin-right:8px;">Sort by:</label>
+            <select id="borrow-sort-by" class="form-control" style="display:inline-block; width:auto;">
+              <option value="date" selected>Order Date</option>
+              <option value="customer">Customer</option>
+            </select>
+            <select id="borrow-sort-dir" class="form-control" style="display:inline-block; width:auto; margin-left:6px;">
+              <option value="desc" selected>Desc</option>
+              <option value="asc">Asc</option>
+            </select>
+          </div>
+        </div>
         <table class="table table-striped table-hover">
           <thead>
             <tr>
@@ -81,6 +94,20 @@
     <div class="panel panel-default">
       <div class="panel-heading"><strong>Recent Purchases</strong></div>
       <div class="panel-body">
+        <div class="row" style="margin-bottom:10px;">
+          <div class="col-sm-6">
+            <label for="purchase-sort-by" class="control-label" style="margin-right:8px;">Sort by:</label>
+            <select id="purchase-sort-by" class="form-control" style="display:inline-block; width:auto;">
+              <option value="date" selected>Purchase Date</option>
+              <option value="customer">Customer</option>
+              <option value="dollars">Dollars</option>
+            </select>
+            <select id="purchase-sort-dir" class="form-control" style="display:inline-block; width:auto; margin-left:6px;">
+              <option value="desc" selected>Desc</option>
+              <option value="asc">Asc</option>
+            </select>
+          </div>
+        </div>
         <table class="table table-striped table-hover">
           <thead>
             <tr>
