@@ -53,46 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => $(".alert").alert("close"), 4000);
   }
 
-  /* ------------------------- UPDATE QUANTITY ------------------------- */
-  async function updateQuantity(bookId, delta) {
-    try {
-      const res = await fetch(`${apiBase}/books/${bookId}`);
-      if (!res.ok) { showAlert("danger", "Failed to load book."); return; }
-      const book = await res.json();
-
-      const newQty = (book.quantity ?? 0) + delta;
-      if (newQty < 0) {
-        showAlert("warning", "Quantity cannot be negative.");
-        return;
-      }
-
-      const payload = {
-        title: book.title,
-        author: book.author,
-        genre: book.genre,
-        price: book.price,
-        available: book.available,
-        imageUrl: book.imageUrl,
-        quantity: newQty
-      };
-
-      const putRes = await fetch(`${apiBase}/books/${bookId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-
-      if (putRes.ok) {
-        showAlert("success", `Quantity updated to ${newQty}`);
-        await loadBooks();
-      } else {
-        showAlert("danger", "Failed to update quantity.");
-      }
-
-    } catch (err) {
-      showAlert("danger", "Unexpected error.");
-    }
-  }
+  /* (Removed) Inline quantity update; handled via modal now */
 
   /* ---------------------------- LOAD BOOKS ---------------------------- */
   async function loadBooks() {
@@ -151,26 +112,15 @@ document.addEventListener("DOMContentLoaded", () => {
       priceTd.textContent = formatPrice(book.price);
       tr.insertBefore(priceTd, tr.querySelectorAll("td")[4]); // before Available
 
-      /* ----- QUANTITY COLUMN ----- */
+      /* ----- QUANTITY COLUMN (display only) ----- */
       const qtyTd = document.createElement("td");
       qtyTd.className = "__qty";
-      qtyTd.innerHTML = `
-        <div style="display:flex; align-items:center; gap:6px;">
-          <button class="btn btn-xs btn-default qty-minus" data-id="${book.id}">-</button>
-          <span class="qty-display">${book.quantity ?? 0}</span>
-          <button class="btn btn-xs btn-default qty-plus" data-id="${book.id}">+</button>
-        </div>
-      `;
+      const qtyVal = (typeof book.quantity === 'number') ? book.quantity : 0;
+      qtyTd.textContent = `${qtyVal} in stock`;
       tr.insertBefore(qtyTd, tr.querySelectorAll("td")[5]); // after price
     });
 
-    /** QUANTITY BUTTON EVENTS **/
-    document.querySelectorAll(".qty-plus").forEach(btn => {
-      btn.addEventListener("click", () => updateQuantity(btn.dataset.id, +1));
-    });
-    document.querySelectorAll(".qty-minus").forEach(btn => {
-      btn.addEventListener("click", () => updateQuantity(btn.dataset.id, -1));
-    });
+    /* (Removed) Quantity +/- button events */
 
     /** ADD EDIT BUTTON **/
     Array.from(document.querySelectorAll('#books-body tr')).forEach((tr, i) => {
