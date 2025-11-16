@@ -1,26 +1,49 @@
 // manage-books.js
 const apiBase = "https://elibrary-system.onrender.com";
 
+/* ---------------------------- UTILITIES ---------------------------- */
+
 function formatPrice(v) {
   if (v === undefined || v === null || isNaN(Number(v))) return "-";
   return `$${Number(v).toFixed(2)}`;
 }
 
+// Validate image dimensions (client-side)
+function validateImageDimensions(url, allowedSizes) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const w = img.width;
+      const h = img.height;
+
+      const isValid = allowedSizes.some(size =>
+        size.width === w && size.height === h
+      );
+
+      resolve(isValid);
+    };
+    img.onerror = () => resolve(false);
+    img.src = url;
+  });
+}
+
+/* ---------------------------- MAIN SCRIPT ---------------------------- */
+
 document.addEventListener("DOMContentLoaded", () => {
+
   const user = JSON.parse(localStorage.getItem("user"));
   const alertContainer = document.getElementById("alert-container");
 
-  // Restrict access to staff only
+  /* ------------------------ ACCESS RESTRICTION ------------------------ */
   if (!user || user.role !== "STAFF") {
     alert("Access denied. Staff only.");
     window.location.href = "home.html";
     return;
   }
 
-  // Navbar
   if (typeof renderNav === 'function') { renderNav(); }
 
-  // ✅ Alert helper
+  /* ------------------------------ ALERT ------------------------------ */
   function showAlert(type, message) {
     alertContainer.innerHTML =
       `<div class="alert alert-${type} alert-dismissible fade in">
@@ -30,14 +53,56 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => $(".alert").alert("close"), 4000);
   }
 
-  // ✅ Load all books
+  /* ------------------------- UPDATE QUANTITY ------------------------- */
+  async function updateQuantity(bookId, delta) {
+    try {
+      const res = await fetch(`${apiBase}/books/${bookId}`);
+      if (!res.ok) { showAlert("danger", "Failed to load book."); return; }
+      const book = await res.json();
+
+      const newQty = (book.quantity ?? 0) + delta;
+      if (newQty < 0) {
+        showAlert("warning", "Quantity cannot be negative.");
+        return;
+      }
+
+      const payload = {
+        title: book.title,
+        author: book.author,
+        genre: book.genre,
+        price: book.price,
+        available: book.available,
+        imageUrl: book.imageUrl,
+        quantity: newQty
+      };
+
+      const putRes = await fetch(`${apiBase}/books/${bookId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (putRes.ok) {
+        showAlert("success", `Quantity updated to ${newQty}`);
+        await loadBooks();
+      } else {
+        showAlert("danger", "Failed to update quantity.");
+      }
+
+    } catch (err) {
+      showAlert("danger", "Unexpected error.");
+    }
+  }
+
+  /* ---------------------------- LOAD BOOKS ---------------------------- */
   async function loadBooks() {
     const res = await fetch(`${apiBase}/books`);
     const books = await res.json();
     const tbody = document.getElementById("books-body");
     tbody.innerHTML = "";
 
-    books.forEach((book) => {
+    /** Create base rows first **/
+    books.forEach(book => {
       const row = document.createElement("tr");
       row.innerHTML = `
         <td>${book.title}</td>
@@ -53,100 +118,103 @@ document.addEventListener("DOMContentLoaded", () => {
       tbody.appendChild(row);
     });
 
-    // Delete book logic
-    document.querySelectorAll(".delete-btn").forEach((btn) => {
+    /** DELETE BUTTONS **/
+    document.querySelectorAll(".delete-btn").forEach(btn => {
       btn.addEventListener("click", async () => {
         const id = btn.dataset.id;
-        if (confirm("Are you sure you want to delete this book?")) {
+        if (confirm("Delete this book?")) {
           const res = await fetch(`${apiBase}/books/${id}`, { method: "DELETE" });
           if (res.ok) {
-            showAlert("success", "Book deleted successfully!");
-            const mbSearch = document.getElementById('mb-search-box');
-            const term = mbSearch ? mbSearch.value.trim() : '';
+            showAlert("success", "Book deleted.");
+            const term = document.getElementById("mb-search-box").value.trim();
             await loadBooks();
             filterRows(term);
-          } else {
-            showAlert("danger", "Failed to delete book.");
-          }
+          } else showAlert("danger", "Delete failed.");
         }
       });
     });
 
-    // Add Image, Price, and Quantity columns to match header
+    /** ADD IMAGE / PRICE / QUANTITY COLUMNS **/
     Array.from(document.querySelectorAll('#books-body tr')).forEach((tr, i) => {
-      const book = (Array.isArray(books)) ? books[i] : null;
+      const book = books[i];
       if (!book) return;
 
-      // Insert image as first column if not already present
-      const firstTd = tr.querySelector('td');
-      const hasImage = firstTd && firstTd.querySelector('img');
-      if (!hasImage) {
-        const imgTd = document.createElement('td');
-        if (book.imageUrl) {
-          imgTd.innerHTML = `<img src="${book.imageUrl}" alt="${book.title || 'cover'}" style="width:50px;height:70px;object-fit:cover;border-radius:3px;">`;
-        } else {
-          imgTd.innerHTML = `<span class="text-muted">-</span>`;
-        }
-        tr.insertBefore(imgTd, tr.querySelectorAll('td')[0]);
-      }
+      /* ----- IMAGE COLUMN ----- */
+      const imgTd = document.createElement("td");
+      imgTd.innerHTML = book.imageUrl
+        ? `<img src="${book.imageUrl}" style="width:50px;height:70px;object-fit:cover;border-radius:3px;">`
+        : `<span class="text-muted">-</span>`;
+      tr.insertBefore(imgTd, tr.firstChild);
 
-      // Insert static price cell before the Available column (index 3 originally)
-      const tdsNow = tr.querySelectorAll('td');
-      const priceTd = document.createElement('td');
+      /* ----- PRICE COLUMN ----- */
+      const priceTd = document.createElement("td");
       priceTd.textContent = formatPrice(book.price);
-      tr.insertBefore(priceTd, tdsNow[3]);
+      tr.insertBefore(priceTd, tr.querySelectorAll("td")[4]); // before Available
 
-      // Insert quantity cell immediately after price
-      const cellsAfterPrice = tr.querySelectorAll('td');
-      const priceIndex = Array.prototype.indexOf.call(cellsAfterPrice, priceTd);
-      const qtyTd = document.createElement('td');
-      qtyTd.className = '__qty';
-      qtyTd.textContent = (typeof book.quantity === 'number') ? `${book.quantity} in stock` : '-';
-      tr.insertBefore(qtyTd, tr.querySelectorAll('td')[priceIndex + 1]);
+      /* ----- QUANTITY COLUMN ----- */
+      const qtyTd = document.createElement("td");
+      qtyTd.className = "__qty";
+      qtyTd.innerHTML = `
+        <div style="display:flex; align-items:center; gap:6px;">
+          <button class="btn btn-xs btn-default qty-minus" data-id="${book.id}">-</button>
+          <span class="qty-display">${book.quantity ?? 0}</span>
+          <button class="btn btn-xs btn-default qty-plus" data-id="${book.id}">+</button>
+        </div>
+      `;
+      tr.insertBefore(qtyTd, tr.querySelectorAll("td")[5]); // after price
     });
 
-    // Ensure Edit button exists in Actions cell and wire handler
-    Array.from(document.querySelectorAll('#books-body tr')).forEach((tr, i) => {
-      const book = (Array.isArray(books)) ? books[i] : null;
-      if (!book) return;
-      const tds = tr.querySelectorAll('td');
-      const actionsTd = tds[tds.length - 1];
-      if (!actionsTd) return;
-      if (!actionsTd.querySelector('.edit-btn')) {
-        const editBtn = document.createElement('button');
-        editBtn.className = 'btn btn-primary btn-sm edit-btn';
-        editBtn.setAttribute('data-id', book.id);
-        editBtn.innerHTML = '<span class="glyphicon glyphicon-edit"></span> Edit';
-        // Insert Edit button before Delete
-        actionsTd.insertBefore(editBtn, actionsTd.firstChild);
-        // Space between buttons
-        actionsTd.insertBefore(document.createTextNode(' '), editBtn.nextSibling);
+    /** QUANTITY BUTTON EVENTS **/
+    document.querySelectorAll(".qty-plus").forEach(btn => {
+      btn.addEventListener("click", () => updateQuantity(btn.dataset.id, +1));
+    });
+    document.querySelectorAll(".qty-minus").forEach(btn => {
+      btn.addEventListener("click", () => updateQuantity(btn.dataset.id, -1));
+    });
 
-        editBtn.addEventListener('click', async () => {
-          try {
-            const res = await fetch(`${apiBase}/books/${book.id}`);
-            if (!res.ok) { showAlert('danger', 'Failed to load book for editing.'); return; }
-            const b = await res.json();
-            const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = (v ?? '').toString(); };
-            setVal('edit-book-id', b.id);
-            setVal('edit-available', b.available);
-            setVal('edit-title', b.title);
-            setVal('edit-author', b.author);
-            setVal('edit-genre', b.genre);
-            setVal('edit-price', (typeof b.price === 'number') ? b.price : '');
-            setVal('edit-imageUrl', b.imageUrl || '');
-            if (typeof $ !== 'undefined' && $('#editBookModal').modal) {
-              $('#editBookModal').modal('show');
-            }
-          } catch (e) {
-            showAlert('danger', 'Unexpected error loading book.');
-          }
-        });
-      }
+    /** ADD EDIT BUTTON **/
+    Array.from(document.querySelectorAll('#books-body tr')).forEach((tr, i) => {
+      const book = books[i];
+      const td = tr.querySelectorAll("td");
+      const actionsTd = td[td.length - 1];
+
+      const editBtn = document.createElement("button");
+      editBtn.className = "btn btn-primary btn-sm edit-btn";
+      editBtn.innerHTML = `<span class="glyphicon glyphicon-edit"></span> Edit`;
+      editBtn.dataset.id = book.id;
+
+      actionsTd.insertBefore(editBtn, actionsTd.firstChild);
+      actionsTd.insertBefore(document.createTextNode(" "), editBtn.nextSibling);
+
+      editBtn.addEventListener("click", async () => {
+        try {
+          const res = await fetch(`${apiBase}/books/${book.id}`);
+          if (!res.ok) return showAlert("danger", "Failed to load book.");
+          const b = await res.json();
+
+          const set = (id, v) => {
+            const el = document.getElementById(id);
+            if (el) el.value = (v ?? "").toString();
+          };
+
+          set("edit-book-id", b.id);
+          set("edit-title", b.title);
+          set("edit-author", b.author);
+          set("edit-genre", b.genre);
+          set("edit-price", b.price);
+          set("edit-imageUrl", b.imageUrl);
+          set("edit-available", b.available);
+          set("edit-quantity", b.quantity ?? 0);
+
+          $("#editBookModal").modal("show");
+        } catch {
+          showAlert("danger", "Unexpected error.");
+        }
+      });
     });
   }
 
-  // ✅ Add new book
+  /* ----------------------- ADD BOOK FORM ----------------------- */
   document.getElementById("add-book-form").addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -154,12 +222,13 @@ document.addEventListener("DOMContentLoaded", () => {
       title: document.getElementById("title").value.trim(),
       author: document.getElementById("author").value.trim(),
       genre: document.getElementById("genre").value.trim(),
-      price: parseFloat(document.getElementById("price").value.trim()),
-      available: true
+      price: Number(document.getElementById("price").value.trim()),
+      available: true,
+      quantity: 0
     };
 
     if (isNaN(newBook.price) || newBook.price < 0) {
-      showAlert("warning", "Please enter a valid non-negative price.");
+      showAlert("warning", "Invalid price.");
       return;
     }
 
@@ -170,82 +239,81 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     if (res.ok) {
-      showAlert("success", "Book added successfully!");
+      showAlert("success", "Book added!");
       e.target.reset();
-      const mbSearch = document.getElementById('mb-search-box');
-      const term = mbSearch ? mbSearch.value.trim() : '';
       await loadBooks();
-      filterRows(term);
-    } else {
-      showAlert("danger", "Error adding book.");
-    }
+    } else showAlert("danger", "Failed to add book.");
   });
-  // Client-side filter utility: matches Title/Author/Genre
+
+  /* ---------------------- SEARCH FILTER ---------------------- */
   function filterRows(term) {
-    const tbody = document.getElementById('books-body');
-    if (!tbody) return;
-    const q = (term || '').toLowerCase();
-    Array.from(tbody.querySelectorAll('tr')).forEach(tr => {
-      const tds = tr.querySelectorAll('td');
-      // After injections: [Image, Title, Author, Genre, Price, Quantity, Available, Actions]
-      const title = (tds[1]?.textContent || '').toLowerCase();
-      const author = (tds[2]?.textContent || '').toLowerCase();
-      const genre = (tds[3]?.textContent || '').toLowerCase();
-      const match = title.includes(q) || author.includes(q) || genre.includes(q);
-      tr.style.display = match ? '' : 'none';
+    const q = term.toLowerCase();
+    document.querySelectorAll("#books-body tr").forEach(tr => {
+      const td = tr.querySelectorAll("td");
+      const title = td[1]?.textContent.toLowerCase() || "";
+      const author = td[2]?.textContent.toLowerCase() || "";
+      const genre = td[3]?.textContent.toLowerCase() || "";
+      tr.style.display = (title.includes(q) || author.includes(q) || genre.includes(q)) ? "" : "none";
     });
   }
 
-  // Wire up search input
-  const mbSearch = document.getElementById('mb-search-box');
-  if (mbSearch) {
-    mbSearch.addEventListener('input', (e) => {
-      filterRows(e.target.value.trim());
-    });
-  }
+  const mbSearch = document.getElementById("mb-search-box");
+  mbSearch?.addEventListener("input", e => filterRows(e.target.value.trim()));
 
-  // Load initial books then apply filter if any
-  (async () => { await loadBooks(); filterRows(mbSearch ? mbSearch.value.trim() : ''); })();
-  
-  // Save edited book from modal
-  const saveBtn = document.getElementById('save-edit-btn');
-  if (saveBtn) {
-    saveBtn.addEventListener('click', async () => {
-      const idEl = document.getElementById('edit-book-id');
-      if (!idEl || !idEl.value) { showAlert('danger', 'Missing book id.'); return; }
-      const id = idEl.value;
-      const title = (document.getElementById('edit-title')?.value || '').trim();
-      const author = (document.getElementById('edit-author')?.value || '').trim();
-      const genre = (document.getElementById('edit-genre')?.value || '').trim();
-      const priceStr = (document.getElementById('edit-price')?.value || '').trim();
-      const imageUrl = (document.getElementById('edit-imageUrl')?.value || '').trim();
-      const availableStr = (document.getElementById('edit-available')?.value || 'true');
-      const available = ('' + availableStr) === 'true';
+  /* ----------------------- INITIAL LOAD ----------------------- */
+  (async () => {
+    await loadBooks();
+    filterRows(mbSearch?.value.trim() || "");
+  })();
 
-      const price = Number(priceStr);
-      if (!title || !author || !genre || isNaN(price) || price < 0) {
-        showAlert('warning', 'Please provide valid title, author, genre, and non-negative price.');
+  /* ----------------------- SAVE FROM MODAL ----------------------- */
+  const saveBtn = document.getElementById("save-edit-btn");
+  saveBtn.addEventListener("click", async () => {
+
+    const id = document.getElementById("edit-book-id").value;
+    const title = document.getElementById("edit-title").value.trim();
+    const author = document.getElementById("edit-author").value.trim();
+    const genre = document.getElementById("edit-genre").value.trim();
+    const price = Number(document.getElementById("edit-price").value.trim());
+    const imageUrl = document.getElementById("edit-imageUrl").value.trim();
+    const available = document.getElementById("edit-available").value === "true";
+    const quantity = Number(document.getElementById("edit-quantity").value.trim());
+
+    if (!title || !author || !genre || isNaN(price) || price < 0) {
+      showAlert("warning", "Invalid input.");
+      return;
+    }
+    if (quantity < 0 || isNaN(quantity)) {
+      showAlert("warning", "Quantity must be non-negative.");
+      return;
+    }
+
+    // Validate image dimensions
+    if (imageUrl) {
+      const allowedSizes = [
+        { width: 600, height: 900 },
+        { width: 300, height: 450 },
+        { width: 240, height: 360 }
+      ];
+      const validImg = await validateImageDimensions(imageUrl, allowedSizes);
+      if (!validImg) {
+        showAlert("danger", "Image must be 600×900, 300×450, or 240×360 px.");
         return;
       }
+    }
 
-      const payload = { title, author, genre, price, available, imageUrl };
-      const res = await fetch(`${apiBase}/books/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (res.ok) {
-        if (typeof $ !== 'undefined' && $('#editBookModal').modal) {
-          $('#editBookModal').modal('hide');
-        }
-        showAlert('success', 'Book updated successfully.');
-        const term = mbSearch ? mbSearch.value.trim() : '';
-        await loadBooks();
-        filterRows(term);
-      } else {
-        showAlert('danger', 'Failed to update book.');
-      }
+    const payload = { title, author, genre, price, available, imageUrl, quantity };
+
+    const res = await fetch(`${apiBase}/books/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
     });
-  }
-});
 
+    if (res.ok) {
+      $("#editBookModal").modal("hide");
+      showAlert("success", "Book updated!");
+      await loadBooks();
+    } else showAlert("danger", "Update failed.");
+  });
+});
