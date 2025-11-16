@@ -214,38 +214,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  /* ----------------------- ADD BOOK FORM ----------------------- */
-  document.getElementById("add-book-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const newBook = {
-      title: document.getElementById("title").value.trim(),
-      author: document.getElementById("author").value.trim(),
-      genre: document.getElementById("genre").value.trim(),
-      price: Number(document.getElementById("price").value.trim()),
-      available: true,
-      quantity: 0
-    };
-
-    if (isNaN(newBook.price) || newBook.price < 0) {
-      showAlert("warning", "Invalid price.");
-      return;
-    }
-
-    const res = await fetch(`${apiBase}/books`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newBook)
-    });
-
-    if (res.ok) {
-      showAlert("success", "Book added!");
-      e.target.reset();
-      await loadBooks();
-    } else showAlert("danger", "Failed to add book.");
-  });
-
-  /* ---------------------- SEARCH FILTER ---------------------- */
+  /* ----------------------- SEARCH FILTER ---------------------- */
   function filterRows(term) {
     const q = term.toLowerCase();
     document.querySelectorAll("#books-body tr").forEach(tr => {
@@ -266,7 +235,70 @@ document.addEventListener("DOMContentLoaded", () => {
     filterRows(mbSearch?.value.trim() || "");
   })();
 
-  /* ----------------------- SAVE FROM MODAL ----------------------- */
+  /* ----------------------- OPEN ADD BOOK MODAL ----------------------- */
+  document.getElementById("open-add-modal").addEventListener("click", () => {
+    document.getElementById("add-title").value = "";
+    document.getElementById("add-author").value = "";
+    document.getElementById("add-genre").value = "";
+    document.getElementById("add-price").value = "";
+    document.getElementById("add-quantity").value = "0";
+    document.getElementById("add-imageUrl").value = "";
+    $("#addBookModal").modal("show");
+  });
+
+  /* ----------------------- SAVE NEW BOOK ----------------------- */
+  document.getElementById("save-add-btn").addEventListener("click", async () => {
+
+    const title = document.getElementById("add-title").value.trim();
+    const author = document.getElementById("add-author").value.trim();
+    const genre = document.getElementById("add-genre").value.trim();
+    const price = Number(document.getElementById("add-price").value.trim());
+    const quantity = Number(document.getElementById("add-quantity").value.trim());
+    const imageUrlInput = document.getElementById("add-imageUrl").value.trim();
+
+    if (!title || !author || !genre || isNaN(price) || price < 0 || isNaN(quantity) || quantity < 0) {
+      showAlert("warning", "Please fill in all fields correctly.");
+      return;
+    }
+
+    // Default placeholder image
+    let imageUrl = imageUrlInput || 
+      "https://hds.hel.fi/images/foundation/visual-assets/placeholders/image-m@3x.png";
+
+    // Validate image dimensions
+    const allowedSizes = [
+      { width: 600, height: 900 },
+      { width: 300, height: 450 },
+      { width: 240, height: 360 }
+    ];
+
+    const validImg = await validateImageDimensions(imageUrl, allowedSizes);
+    if (!validImg) {
+      showAlert("danger", "Image must be 600×900, 300×450, or 240×360 px.");
+      return;
+    }
+
+    const newBook = {
+      title, author, genre, price, quantity, imageUrl,
+      available: true
+    };
+
+    const res = await fetch(`${apiBase}/books`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newBook)
+    });
+
+    if (res.ok) {
+      $("#addBookModal").modal("hide");
+      showAlert("success", "Book added successfully!");
+      await loadBooks();
+    } else {
+      showAlert("danger", "Failed to add book.");
+    }
+  });
+
+  /* ----------------------- SAVE EDITED BOOK ----------------------- */
   const saveBtn = document.getElementById("save-edit-btn");
   saveBtn.addEventListener("click", async () => {
 
@@ -283,6 +315,7 @@ document.addEventListener("DOMContentLoaded", () => {
       showAlert("warning", "Invalid input.");
       return;
     }
+
     if (quantity < 0 || isNaN(quantity)) {
       showAlert("warning", "Quantity must be non-negative.");
       return;
@@ -316,4 +349,5 @@ document.addEventListener("DOMContentLoaded", () => {
       await loadBooks();
     } else showAlert("danger", "Update failed.");
   });
+
 });
