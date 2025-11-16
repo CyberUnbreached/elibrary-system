@@ -217,6 +217,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Validate image dimensions
     const allowedSizes = [
+      { width: 900, height: 600 },
       { width: 600, height: 900 },
       { width: 300, height: 450 },
       { width: 240, height: 360 }
