@@ -8,25 +8,6 @@ function formatPrice(v) {
   return `$${Number(v).toFixed(2)}`;
 }
 
-// Validate image dimensions (client-side)
-function validateImageDimensions(url, allowedSizes) {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => {
-      const w = img.width;
-      const h = img.height;
-
-      const isValid = allowedSizes.some(size =>
-        size.width === w && size.height === h
-      );
-
-      resolve(isValid);
-    };
-    img.onerror = () => resolve(false);
-    img.src = url;
-  });
-}
-
 /* ---------------------------- MAIN SCRIPT ---------------------------- */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -52,8 +33,6 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>`;
     setTimeout(() => $(".alert").alert("close"), 4000);
   }
-
-  /* (Removed) Inline quantity update; handled via modal now */
 
   /* ---------------------------- LOAD BOOKS ---------------------------- */
   async function loadBooks() {
@@ -120,8 +99,6 @@ document.addEventListener("DOMContentLoaded", () => {
       tr.insertBefore(qtyTd, tr.querySelectorAll("td")[5]); // after price
     });
 
-    /* (Removed) Quantity +/- button events */
-
     /** ADD EDIT BUTTON **/
     Array.from(document.querySelectorAll('#books-body tr')).forEach((tr, i) => {
       const book = books[i];
@@ -164,7 +141,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  /* ----------------------- SEARCH FILTER ---------------------- */
+  /* ---------------------- SEARCH FILTER ---------------------- */
   function filterRows(term) {
     const q = term.toLowerCase();
     document.querySelectorAll("#books-body tr").forEach(tr => {
@@ -215,20 +192,6 @@ document.addEventListener("DOMContentLoaded", () => {
     let imageUrl = imageUrlInput || 
       "https://hds.hel.fi/images/foundation/visual-assets/placeholders/image-m@3x.png";
 
-    // Validate image dimensions
-    const allowedSizes = [
-      { width: 900, height: 600 },
-      { width: 600, height: 900 },
-      { width: 300, height: 450 },
-      { width: 240, height: 360 }
-    ];
-
-    const validImg = await validateImageDimensions(imageUrl, allowedSizes);
-    if (!validImg) {
-      showAlert("danger", "Image must be 600×900, 300×450, or 240×360 px.");
-      return;
-    }
-
     const newBook = {
       title, author, genre, price, quantity, imageUrl,
       available: true
@@ -270,20 +233,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (quantity < 0 || isNaN(quantity)) {
       showAlert("warning", "Quantity must be non-negative.");
       return;
-    }
-
-    // Validate image dimensions
-    if (imageUrl) {
-      const allowedSizes = [
-        { width: 600, height: 900 },
-        { width: 300, height: 450 },
-        { width: 240, height: 360 }
-      ];
-      const validImg = await validateImageDimensions(imageUrl, allowedSizes);
-      if (!validImg) {
-        showAlert("danger", "Image must be 600×900, 300×450, or 240×360 px.");
-        return;
-      }
     }
 
     const payload = { title, author, genre, price, available, imageUrl, quantity };
