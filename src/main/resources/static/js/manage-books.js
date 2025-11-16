@@ -72,112 +72,12 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
 
-    // Inject price cells for each row (with inline editor)
-    Array.from(document.querySelectorAll('#books-body tr')).forEach((tr, i) => {
-      const tds = tr.querySelectorAll('td');
-      if (tds.length >= 5 && !tr.querySelector('.book-price')) {
-        const priceTd = document.createElement('td');
-        priceTd.className = 'book-price';
-        const book = (Array.isArray(books)) ? books[i] : null;
-
-        const priceVal = (book && typeof book.price !== 'undefined') ? Number(book.price) : null;
-        const priceHtml = `
-          <span class="price-display">${formatPrice(priceVal)}</span>
-          <input type="number" class="form-control input-sm price-input" style="display:none; width:110px; margin-top:4px" step="0.01" min="0" ${priceVal !== null ? `value="${priceVal}"` : ''}>
-          <div class="btn-group btn-group-xs" style="margin-top:4px">
-            <button type="button" class="btn btn-default edit-price-btn" title="Edit Price"><span class="glyphicon glyphicon-pencil"></span></button>
-            <button type="button" class="btn btn-success save-price-btn" style="display:none" title="Save"><span class="glyphicon glyphicon-ok"></span></button>
-            <button type="button" class="btn btn-default cancel-price-btn" style="display:none" title="Cancel"><span class="glyphicon glyphicon-remove"></span></button>
-          </div>`;
-
-        priceTd.innerHTML = priceHtml;
-        // Insert before the Available cell (index 3 originally)
-        tr.insertBefore(priceTd, tds[3]);
-
-        // Hook up inline editor actions
-        const displayEl = priceTd.querySelector('.price-display');
-        const inputEl = priceTd.querySelector('.price-input');
-        const editBtn = priceTd.querySelector('.edit-price-btn');
-        const saveBtn = priceTd.querySelector('.save-price-btn');
-        const cancelBtn = priceTd.querySelector('.cancel-price-btn');
-
-        function enterEdit() {
-          displayEl.style.display = 'none';
-          inputEl.style.display = '';
-          saveBtn.style.display = '';
-          cancelBtn.style.display = '';
-          editBtn.style.display = 'none';
-          inputEl.focus();
-          inputEl.select();
-        }
-
-        function exitEdit() {
-          displayEl.style.display = '';
-          inputEl.style.display = 'none';
-          saveBtn.style.display = 'none';
-          cancelBtn.style.display = 'none';
-          editBtn.style.display = '';
-        }
-
-        editBtn.addEventListener('click', enterEdit);
-        cancelBtn.addEventListener('click', () => {
-          // reset input to current book price
-          if (book) inputEl.value = book.price;
-          exitEdit();
-        });
-
-        async function persistPrice(newPrice) {
-          // Validate
-          const parsed = Number(newPrice);
-          if (isNaN(parsed) || parsed < 0) {
-            showAlert('warning', 'Please enter a valid non-negative price.');
-            return;
-          }
-          if (!book || !book.id) {
-            showAlert('danger', 'Unable to update price: missing book id.');
-            return;
-          }
-
-          // Construct payload with existing fields to avoid nulling others
-          const payload = {
-            title: book.title,
-            author: book.author,
-            genre: book.genre,
-            price: parsed,
-            available: book.available
-          };
-
-          const res = await fetch(`${apiBase}/books/${book.id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-
-          if (res.ok) {
-            // Update local state and UI
-            book.price = parsed;
-            displayEl.textContent = formatPrice(parsed);
-            exitEdit();
-            showAlert('success', 'Price updated successfully.');
-          } else {
-            showAlert('danger', 'Failed to update price.');
-          }
-        }
-
-        saveBtn.addEventListener('click', () => persistPrice(inputEl.value));
-        inputEl.addEventListener('keydown', (ev) => {
-          if (ev.key === 'Enter') { persistPrice(inputEl.value); }
-          if (ev.key === 'Escape') { cancelBtn.click(); }
-        });
-      }
-    });
-
-    // Add Image and Quantity columns after price injection
+    // Add Image, Price, and Quantity columns to match header
     Array.from(document.querySelectorAll('#books-body tr')).forEach((tr, i) => {
       const book = (Array.isArray(books)) ? books[i] : null;
       if (!book) return;
 
-      // Insert image as first column if not already present (8 cols total expected after this)
+      // Insert image as first column if not already present
       const firstTd = tr.querySelector('td');
       const hasImage = firstTd && firstTd.querySelector('img');
       if (!hasImage) {
@@ -190,21 +90,19 @@ document.addEventListener("DOMContentLoaded", () => {
         tr.insertBefore(imgTd, tr.querySelectorAll('td')[0]);
       }
 
-      // Ensure quantity cell exists just after the price cell
-      const cellsNow = tr.querySelectorAll('td');
-      // After inserting image, the price cell ('.book-price') should be at index 4: [Image, Title, Author, Genre, Price, Available, Actions]
-      const priceCell = tr.querySelector('.book-price');
-      if (priceCell) {
-        const qtyExisting = tr.querySelector('td.__qty');
-        if (!qtyExisting) {
-          const qtyTd = document.createElement('td');
-          qtyTd.className = '__qty';
-          qtyTd.textContent = (typeof book.quantity === 'number') ? `${book.quantity} in stock` : '-';
-          const priceIndex = Array.prototype.indexOf.call(cellsNow, priceCell);
-          const insertBeforeIndex = priceIndex >= 0 ? priceIndex + 1 : 5;
-          tr.insertBefore(qtyTd, tr.querySelectorAll('td')[insertBeforeIndex]);
-        }
-      }
+      // Insert static price cell before the Available column (index 3 originally)
+      const tdsNow = tr.querySelectorAll('td');
+      const priceTd = document.createElement('td');
+      priceTd.textContent = formatPrice(book.price);
+      tr.insertBefore(priceTd, tdsNow[3]);
+
+      // Insert quantity cell immediately after price
+      const cellsAfterPrice = tr.querySelectorAll('td');
+      const priceIndex = Array.prototype.indexOf.call(cellsAfterPrice, priceTd);
+      const qtyTd = document.createElement('td');
+      qtyTd.className = '__qty';
+      qtyTd.textContent = (typeof book.quantity === 'number') ? `${book.quantity} in stock` : '-';
+      tr.insertBefore(qtyTd, tr.querySelectorAll('td')[priceIndex + 1]);
     });
 
     // Ensure Edit button exists in Actions cell and wire handler
@@ -350,3 +248,4 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
