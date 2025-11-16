@@ -61,7 +61,10 @@ document.addEventListener("DOMContentLoaded", () => {
           const res = await fetch(`${apiBase}/books/${id}`, { method: "DELETE" });
           if (res.ok) {
             showAlert("success", "Book deleted successfully!");
-            loadBooks();
+            const mbSearch = document.getElementById('mb-search-box');
+            const term = mbSearch ? mbSearch.value.trim() : '';
+            await loadBooks();
+            filterRows(term);
           } else {
             showAlert("danger", "Failed to delete book.");
           }
@@ -231,13 +234,38 @@ document.addEventListener("DOMContentLoaded", () => {
     if (res.ok) {
       showAlert("success", "Book added successfully!");
       e.target.reset();
-      loadBooks();
+      const mbSearch = document.getElementById('mb-search-box');
+      const term = mbSearch ? mbSearch.value.trim() : '';
+      await loadBooks();
+      filterRows(term);
     } else {
       showAlert("danger", "Error adding book.");
     }
   });
+  // Client-side filter utility: matches Title/Author/Genre
+  function filterRows(term) {
+    const tbody = document.getElementById('books-body');
+    if (!tbody) return;
+    const q = (term || '').toLowerCase();
+    Array.from(tbody.querySelectorAll('tr')).forEach(tr => {
+      const tds = tr.querySelectorAll('td');
+      // After injections: [Image, Title, Author, Genre, Price, Quantity, Available, Actions]
+      const title = (tds[1]?.textContent || '').toLowerCase();
+      const author = (tds[2]?.textContent || '').toLowerCase();
+      const genre = (tds[3]?.textContent || '').toLowerCase();
+      const match = title.includes(q) || author.includes(q) || genre.includes(q);
+      tr.style.display = match ? '' : 'none';
+    });
+  }
 
-  // ✅ Load initial books
-  loadBooks();
+  // Wire up search input
+  const mbSearch = document.getElementById('mb-search-box');
+  if (mbSearch) {
+    mbSearch.addEventListener('input', (e) => {
+      filterRows(e.target.value.trim());
+    });
+  }
+
+  // Load initial books then apply filter if any
+  (async () => { await loadBooks(); filterRows(mbSearch ? mbSearch.value.trim() : ''); })();
 });
-
