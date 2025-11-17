@@ -34,7 +34,7 @@ async function loadBooks(searchTerm = "") {
       <td>${book.title}</td>
       <td>${book.author}</td>
       <td>${book.genre}</td>
-      <td>${book.available ? "Available" : "Checked Out"}</td>
+      <td>${book.available ? "✅ Available to Borrow" : "❌ Checked Out"}</td>
     `;
     tr.querySelectorAll('td')[2].insertAdjacentHTML('afterend', '<td>' + formatPrice(book.price) + '</td>');
     tbody.appendChild(tr);
@@ -115,10 +115,10 @@ document.addEventListener("DOMContentLoaded", () => {
         ? `<img src="${book.imageUrl}" alt="${book.title}" style="width:50px;height:70px;object-fit:cover;border-radius:3px;">`
         : `<span class="text-muted">-</span>`;
 
-      // ❗ Correct Borrow Logic (NOT quantity)
+      // ❗ Borrow Logic
       const availabilityText = book.available
-        ? "Available to Borrow"
-        : `Checked Out (Due: ${book.dueDate || "Unknown"})`;
+        ? "✅ Available to Borrow"
+        : `❌ Checked Out`;
 
       tr.innerHTML = `
         <td>${imgCell}</td>
