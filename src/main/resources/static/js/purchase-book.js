@@ -28,17 +28,24 @@ async function loadBooks(searchTerm = "") {
   );
 
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No books found.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">No books found.</td></tr>`;
     return;
   }
 
   filtered.forEach(book => {
     const tr = document.createElement("tr");
+    const imgCell = book.imageUrl
+      ? `<img src="${book.imageUrl}" style="width:50px;height:70px;object-fit:cover;border-radius:3px;">`
+      : `<span class=\"text-muted\">-</span>`;
+    const qtyVal = (typeof book.quantity === 'number') ? book.quantity : 0;
+
     tr.innerHTML = `
+      <td>${imgCell}</td>
       <td>${book.title}</td>
       <td>${book.author}</td>
       <td>${book.genre}</td>
       <td class="text-right">$${Number(book.price).toFixed(2)}</td>
+      <td class="text-center">${qtyVal}</td>
       <td class="text-center">
         <button class="btn btn-primary btn-sm" data-book-id="${book.id}">
           <span class="glyphicon glyphicon-shopping-cart"></span> Buy
