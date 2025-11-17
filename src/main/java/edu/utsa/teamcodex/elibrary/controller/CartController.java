@@ -11,6 +11,7 @@ import edu.utsa.teamcodex.elibrary.repository.UserRepository;
 import edu.utsa.teamcodex.elibrary.repository.PurchaseRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @RestController
@@ -69,6 +70,7 @@ public class CartController {
     }
      // Checkout cart
     @PostMapping("/{userId}/checkout")
+    @Transactional
     public ResponseEntity<String> checkoutCart(@PathVariable Long userId,
                                                @RequestParam(required = false) String discountCode) {
         Cart cart = cartRepository.findByUserId(userId)
@@ -77,6 +79,42 @@ public class CartController {
         List<CartItem> items = cart.getItems();
         if (items.isEmpty()) {
             return ResponseEntity.badRequest().body("Cart is empty");
+        }
+
+        // Verify availability for each item using latest book quantities
+        StringBuilder insufficient = new StringBuilder();
+        for (CartItem item : items) {
+            // Reload the latest book state to avoid stale quantities
+            Book freshBook = bookRepository.findById(item.getBook().getId())
+                    .orElseThrow(() -> new RuntimeException("Book not found"));
+            int availableQty = freshBook.getQuantity();
+            int requestedQty = item.getQuantity();
+            if (requestedQty > availableQty) {
+                if (insufficient.length() > 0) insufficient.append(", ");
+                insufficient.append(freshBook.getTitle())
+                        .append(" (requested ")
+                        .append(requestedQty)
+                        .append(", available ")
+                        .append(availableQty)
+                        .append(")");
+            }
+        }
+
+        if (insufficient.length() > 0) {
+            return ResponseEntity.badRequest().body("Insufficient stock for: " + insufficient);
+        }
+
+        // All items available: decrement inventory now
+        for (CartItem item : items) {
+            Book freshBook = bookRepository.findById(item.getBook().getId())
+                    .orElseThrow(() -> new RuntimeException("Book not found"));
+            int newQty = freshBook.getQuantity() - item.getQuantity();
+            freshBook.setQuantity(newQty);
+            // Update available flag if quantity hits zero
+            if (newQty <= 0) {
+                freshBook.setAvailable(false);
+            }
+            bookRepository.save(freshBook);
         }
 
         double subtotal = items.stream()
