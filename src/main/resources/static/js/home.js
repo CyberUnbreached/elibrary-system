@@ -34,7 +34,7 @@ async function loadBooks(searchTerm = "") {
       <td>${book.title}</td>
       <td>${book.author}</td>
       <td>${book.genre}</td>
-      <td>${book.available ? "✅ Available to Borrow" : "❌ Checked Out"}</td>
+      <td>${book.available ? "Available" : "Checked Out"}</td>
     `;
     tr.querySelectorAll('td')[2].insertAdjacentHTML('afterend', '<td>' + formatPrice(book.price) + '</td>');
     tbody.appendChild(tr);
@@ -55,7 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // -----------------------------------------------
-// OVERRIDE: Load books WITH sorting + images + quantity
+// OVERRIDE: Load books WITH sorting + images + quantity + correct borrow availability
 // -----------------------------------------------
 (function () {
   window.loadBooks = async function (searchTerm = "") {
@@ -66,7 +66,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!tbody) return;
     tbody.innerHTML = "";
 
-    // Filtering
+    // FILTER
     const term = (searchTerm || "").toLowerCase();
     let filteredBooks = books.filter(book =>
       (book.title || '').toLowerCase().includes(term) ||
@@ -74,9 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
       (book.genre || '').toLowerCase().includes(term)
     );
 
-    // -----------------------------
-    // APPLY SORTING
-    // -----------------------------
+    // SORTING
     const sortValue = document.getElementById("sort-select")?.value;
 
     if (sortValue) {
@@ -92,9 +90,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         case "availability":
           filteredBooks.sort((a, b) => {
-            const aAvail = a.quantity > 0 ? 1 : 0;
-            const bAvail = b.quantity > 0 ? 1 : 0;
-            return bAvail - aAvail; // Available first
+            const aAvail = a.available ? 1 : 0;
+            const bAvail = b.available ? 1 : 0;
+            return bAvail - aAvail;
           });
           break;
 
@@ -108,20 +106,19 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // -----------------------------
-    // RENDER BOOK ROWS
-    // -----------------------------
+    // RENDER ROWS
     filteredBooks.forEach(book => {
+
       const tr = document.createElement("tr");
 
       const imgCell = book.imageUrl
         ? `<img src="${book.imageUrl}" alt="${book.title}" style="width:50px;height:70px;object-fit:cover;border-radius:3px;">`
         : `<span class="text-muted">-</span>`;
 
-      const availabilityText =
-        (typeof book.quantity === 'number')
-          ? (book.quantity > 0 ? 'Available to Borrow' : 'Out of Stock')
-          : (book.available ? 'Available to Borrow' : 'Checked Out');
+      // ❗ Correct Borrow Logic (NOT quantity)
+      const availabilityText = book.available
+        ? "Available to Borrow"
+        : `Checked Out (Due: ${book.dueDate || "Unknown"})`;
 
       tr.innerHTML = `
         <td>${imgCell}</td>
@@ -129,7 +126,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <td>${book.author}</td>
         <td>${book.genre}</td>
         <td>${formatPrice(book.price)}</td>
-        <td>${(typeof book.quantity === 'number') ? (book.quantity + ' in stock') : '-'}</td>
+        <td>${book.quantity} in stock</td>
         <td>${availabilityText}</td>
       `;
 
@@ -137,7 +134,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
-  // Re-run loadBooks when sorting changes
+  // Re-run when sorting changes
   document.addEventListener("DOMContentLoaded", () => {
     const sortSelect = document.getElementById("sort-select");
     if (sortSelect) {
