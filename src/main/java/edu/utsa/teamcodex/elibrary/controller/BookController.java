@@ -56,6 +56,8 @@ public class BookController {
                     book.setAuthor(updatedBook.getAuthor());
                     book.setGenre(updatedBook.getGenre());
                     book.setPrice(updatedBook.getPrice());
+                    // Persist inventory quantity from the update payload
+                    book.setQuantity(updatedBook.getQuantity());
                     book.setImageUrl(updatedBook.getImageUrl());
                     book.setAvailable(updatedBook.isAvailable());
                     bookRepository.save(book);
