@@ -324,10 +324,21 @@ async function checkout() {
       alert(text || "Checkout complete.");
     }
 
-    // Reset discount + cart view
+    // Reset discount
     state.appliedDiscount = null;
     if (dom.discountInput) dom.discountInput.value = "";
     if (dom.discountMessage) dom.discountMessage.style.display = "none";
+
+    // Clear cart locally so the customer immediately sees an empty cart
+    state.items = [];
+    state.subtotal = 0;
+    if (dom.cartBody) {
+      dom.cartBody.innerHTML =
+        `<tr><td colspan="6" class="text-center text-muted">Your cart is empty.</td></tr>`;
+    }
+    updateTotals();
+
+    // Reload cart from backend to stay in sync
     await loadCart();
   } catch (err) {
     console.error("Error during checkout:", err);
