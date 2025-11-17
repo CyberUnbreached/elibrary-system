@@ -156,6 +156,32 @@
         </div>
       </div>
     </div>
+
+    <!-- Create Discount Code -->
+    <div class="panel panel-default">
+      <div class="panel-heading"><strong>Create Discount Code</strong></div>
+      <div class="panel-body">
+        <div id="discount-alert" class="alert" style="display:none;"></div>
+        <div class="row">
+          <div class="col-md-4">
+            <label for="discount-code" class="control-label">Code</label>
+            <input type="text" id="discount-code" class="form-control" placeholder="e.g., SAVE10">
+          </div>
+          <div class="col-md-4">
+            <label for="discount-percent" class="control-label">Percent Off</label>
+            <div class="input-group">
+              <input type="number" id="discount-percent" class="form-control" min="1" max="100" step="0.01" placeholder="e.g., 10">
+              <span class="input-group-addon">%</span>
+            </div>
+          </div>
+          <div class="col-md-4" style="padding-top:25px;">
+            <button class="btn btn-success" id="create-discount-btn">
+              <span class="glyphicon glyphicon-plus"></span> Create Discount
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <footer class="text-center" style="margin-top:40px; padding:15px; background-color:#f8f9fa;">

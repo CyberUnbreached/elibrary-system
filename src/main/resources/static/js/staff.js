@@ -262,4 +262,59 @@ window.onload = function () {
   const pDir = document.getElementById('purchase-sort-dir');
   if (pBy) pBy.addEventListener('change', renderPurchasesEnhanced);
   if (pDir) pDir.addEventListener('change', renderPurchasesEnhanced);
+
+  const createBtn = document.getElementById('create-discount-btn');
+  if (createBtn) createBtn.addEventListener('click', createDiscount);
 };
+
+// --- Create Discount Code ---
+async function createDiscount() {
+  const codeInput = document.getElementById('discount-code');
+  const percentInput = document.getElementById('discount-percent');
+  const alertBox = document.getElementById('discount-alert');
+
+  const code = (codeInput?.value || '').trim();
+  const percent = parseFloat(percentInput?.value || '');
+
+  // reset alert
+  if (alertBox) {
+    alertBox.style.display = 'none';
+    alertBox.className = 'alert';
+    alertBox.textContent = '';
+  }
+
+  if (!code) {
+    return showDiscountAlert('Please enter a discount code.', 'danger');
+  }
+  if (!Number.isFinite(percent) || percent <= 0 || percent > 100) {
+    return showDiscountAlert('Percent must be between 1 and 100.', 'danger');
+  }
+
+  try {
+    const res = await fetch(`${apiBase}/discounts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, discountPercent: percent, active: true })
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text || `Failed with status ${res.status}`);
+    }
+
+    // success
+    showDiscountAlert('Discount code created successfully.', 'success');
+    if (codeInput) codeInput.value = '';
+    if (percentInput) percentInput.value = '';
+  } catch (err) {
+    showDiscountAlert(`Error creating discount: ${err.message}`, 'danger');
+  }
+}
+
+function showDiscountAlert(message, type) {
+  const alertBox = document.getElementById('discount-alert');
+  if (!alertBox) return;
+  alertBox.textContent = message;
+  alertBox.className = `alert alert-${type}`;
+  alertBox.style.display = 'block';
+}
