@@ -45,4 +45,43 @@ async function loadTransactions() {
   }
 }
 
-window.onload = loadTransactions;
+// Load user's purchase history
+async function loadPurchases() {
+  try {
+    const res = await fetch(`${apiBase}/purchases/user/${user.id}`);
+    const purchases = await res.json();
+
+    const tbody = document.getElementById("purchases-body");
+    if (!tbody) return;
+
+    tbody.innerHTML = "";
+
+    if (!purchases || purchases.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">No purchases found.</td></tr>`;
+      return;
+    }
+
+    purchases.forEach(p => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${p.book ? p.book.title : "Unknown Book"}</td>
+        <td>${p.book ? p.book.author : "Unknown"}</td>
+        <td>${p.purchaseDate || "-"}</td>
+        <td>$${(p.price ?? 0).toFixed(2)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error("Error loading purchase history:", err);
+    const tbody = document.getElementById("purchases-body");
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Error loading purchases.</td></tr>`;
+    }
+  }
+}
+
+window.onload = function () {
+  loadTransactions();
+  loadPurchases();
+};
+
