@@ -40,14 +40,6 @@ async function loadBooks(searchTerm = "") {
         filtered.sort((a, b) => (b.price || 0) - (a.price || 0));
         break;
 
-      case "availability":
-        filtered.sort((a, b) => {
-          const aa = a.quantity > 0 ? 1 : 0;
-          const bb = b.quantity > 0 ? 1 : 0;
-          return bb - aa; // Available first
-        });
-        break;
-
       case "qty-desc":
         filtered.sort((a, b) => (b.quantity || 0) - (a.quantity || 0));
         break;
