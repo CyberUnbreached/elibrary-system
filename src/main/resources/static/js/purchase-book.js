@@ -7,25 +7,58 @@ if (!user || user.role !== "CUSTOMER") {
   window.location.href = "login.html";
 }
 
-// Navbar
-if (typeof renderNav === 'function') { renderNav(); }
+if (typeof renderNav === "function") renderNav();
 
-// State for selected book
-let selectedBook = null;
+// Current displayed list (needed so Buy button works correctly)
+let currentList = [];
 
-// Load books
+// Load books with search + sorting
 async function loadBooks(searchTerm = "") {
   const res = await fetch(`${apiBase}/books`);
-  const books = await res.json();
+  let books = await res.json();
+
   const tbody = document.getElementById("books-body");
   tbody.innerHTML = "";
 
   const term = searchTerm.toLowerCase();
-  const filtered = books.filter(b =>
+  let filtered = books.filter(b =>
     b.title.toLowerCase().includes(term) ||
     b.author.toLowerCase().includes(term) ||
     b.genre.toLowerCase().includes(term)
   );
+
+  // ---------- SORTING ----------
+  const sortValue = document.getElementById("sort-select")?.value;
+
+  if (sortValue) {
+    switch (sortValue) {
+      case "price-asc":
+        filtered.sort((a, b) => (a.price || 0) - (b.price || 0));
+        break;
+
+      case "price-desc":
+        filtered.sort((a, b) => (b.price || 0) - (a.price || 0));
+        break;
+
+      case "availability":
+        filtered.sort((a, b) => {
+          const aa = a.quantity > 0 ? 1 : 0;
+          const bb = b.quantity > 0 ? 1 : 0;
+          return bb - aa; // Available first
+        });
+        break;
+
+      case "qty-desc":
+        filtered.sort((a, b) => (b.quantity || 0) - (a.quantity || 0));
+        break;
+
+      case "qty-asc":
+        filtered.sort((a, b) => (a.quantity || 0) - (b.quantity || 0));
+        break;
+    }
+  }
+
+  currentList = filtered;
 
   if (filtered.length === 0) {
     tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">No books found.</td></tr>`;
@@ -33,12 +66,12 @@ async function loadBooks(searchTerm = "") {
   }
 
   filtered.forEach(book => {
-    const tr = document.createElement("tr");
+    const qtyVal = typeof book.quantity === "number" ? book.quantity : 0;
     const imgCell = book.imageUrl
       ? `<img src="${book.imageUrl}" style="width:50px;height:70px;object-fit:cover;border-radius:3px;">`
-      : `<span class=\"text-muted\">-</span>`;
-    const qtyVal = (typeof book.quantity === 'number') ? book.quantity : 0;
+      : `<span class="text-muted">-</span>`;
 
+    const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${imgCell}</td>
       <td>${book.title}</td>
@@ -52,21 +85,24 @@ async function loadBooks(searchTerm = "") {
         </button>
       </td>
     `;
+
     tbody.appendChild(tr);
   });
 
-  // Hook up Buy buttons
+  // Connect Buy buttons
   tbody.querySelectorAll("button[data-book-id]").forEach(btn => {
-    btn.addEventListener("click", () => openPurchaseModal(btn.getAttribute("data-book-id"), filtered));
+    btn.addEventListener("click", () => {
+      openPurchaseModal(btn.getAttribute("data-book-id"));
+    });
   });
 }
 
-// Open modal
-function openPurchaseModal(bookId, sourceList) {
-  const book = sourceList.find(b => String(b.id) === String(bookId));
+function openPurchaseModal(bookId) {
+  const book = currentList.find(b => String(b.id) === String(bookId));
   if (!book) return;
 
   selectedBook = book;
+
   document.getElementById("purchase-book-id").value = book.id;
   document.getElementById("purchase-qty").value = 1;
   document.getElementById("purchase-book-info").textContent =
@@ -75,15 +111,12 @@ function openPurchaseModal(bookId, sourceList) {
   $("#purchaseModal").modal("show");
 }
 
-// Submit add-to-cart
-document.getElementById("purchase-form").addEventListener("submit", async (e) => {
+document.getElementById("purchase-form").addEventListener("submit", async e => {
   e.preventDefault();
 
-  if (!selectedBook) return;
-
   const qty = parseInt(document.getElementById("purchase-qty").value, 10);
-  if (isNaN(qty) || qty < 1 || qty > 10) {
-    showAlert("warning", "Please choose a valid quantity (1–10).");
+  if (!selectedBook || qty < 1 || qty > 10) {
+    showAlert("warning", "Invalid quantity.");
     return;
   }
 
@@ -94,25 +127,28 @@ document.getElementById("purchase-form").addEventListener("submit", async (e) =>
     );
 
     if (!res.ok) {
-      const text = await res.text();
-      showAlert("danger", `Add to cart failed: ${text}`);
+      showAlert("danger", "Failed to add to cart.");
       return;
     }
 
     $("#purchaseModal").modal("hide");
-    showAlert("success", "Added to cart. <a href=\"customer-cart.html\">View cart</a>.");
+    showAlert("success", "Added to cart! <a href='customer-cart.html'>View cart</a>.");
   } catch (err) {
     console.error(err);
-    showAlert("danger", "Network error while adding to cart.");
+    showAlert("danger", "Network error.");
   }
 });
 
-// Search
-document.getElementById("search-box").addEventListener("input", (e) => {
+// Search box
+document.getElementById("search-box").addEventListener("input", e => {
   loadBooks(e.target.value.trim());
 });
 
+// Sorting dropdown
+document.getElementById("sort-select").addEventListener("change", () => {
+  const term = document.getElementById("search-box").value.trim();
+  loadBooks(term);
+});
+
 // Init
-window.onload = function () {
-  loadBooks();
-};
+window.onload = () => loadBooks();
