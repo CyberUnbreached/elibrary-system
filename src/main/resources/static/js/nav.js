@@ -20,13 +20,15 @@
         { href: 'borrow-book.html', text: 'Book Lending', icon: 'glyphicon-book' },
         { href: 'customer-transactions.html', text: 'History', icon: 'glyphicon-time' },
         { href: 'purchase-book.html', text: 'Purchase', icon: 'glyphicon-usd' },
-        { href: 'customer-cart.html', text: 'Cart', icon: 'glyphicon-shopping-cart' }
+        { href: 'customer-cart.html', text: 'Cart', icon: 'glyphicon-shopping-cart' },
+        { href: 'profile.html', text: 'Profile', icon: 'glyphicon-cog' }
       ];
     } else if (user.role === 'STAFF') {
       links = [
         { href: 'staff.html', text: 'Dashboard', icon: 'glyphicon-dashboard' },
         { href: 'manage-books.html', text: 'Manage Books', icon: 'glyphicon-book' },
-        { href: 'overdue.html', text: 'Overdue', icon: 'glyphicon-warning-sign' }
+        { href: 'overdue.html', text: 'Overdue', icon: 'glyphicon-warning-sign' },
+        { href: 'profile.html', text: 'Profile', icon: 'glyphicon-cog' }
       ];
     }
 

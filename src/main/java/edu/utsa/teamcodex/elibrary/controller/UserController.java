@@ -50,6 +50,42 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+        return userRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
 
-    
+    @PutMapping(
+        path = "/{id}",
+        consumes = MediaType.APPLICATION_JSON_VALUE,
+        produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        return userRepository.findById(id).map(user -> {
+            String newUsername = body.getOrDefault("username", "").trim();
+            String newEmail = body.getOrDefault("email", "").trim();
+
+            if (newUsername.isEmpty() || newEmail.isEmpty()) {
+                return ResponseEntity.badRequest().body("Username and email are required.");
+            }
+
+            User usernameOwner = userRepository.findByUsernameIgnoreCase(newUsername);
+            if (usernameOwner != null && !usernameOwner.getId().equals(id)) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("Username is already taken.");
+            }
+
+            User emailOwner = userRepository.findByEmailIgnoreCase(newEmail);
+            if (emailOwner != null && !emailOwner.getId().equals(id)) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("Email is already taken.");
+            }
+
+            user.setUsername(newUsername);
+            user.setEmail(newEmail);
+            userRepository.save(user);
+
+            return ResponseEntity.ok(user);
+        }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found."));
+    }
 }

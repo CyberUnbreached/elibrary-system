@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E-Library | Profile</title>
+  <link rel="stylesheet" href="css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-default">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <a class="navbar-brand" href="home.html">
+          <span class="glyphicon glyphicon-home"></span> E-Library
+        </a>
+      </div>
+      <ul class="nav navbar-nav navbar-right" id="nav-auth"></ul>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="page-header text-center">
+      <h2>Update Profile</h2>
+      <p class="text-muted">Change your username and email address.</p>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6 col-md-offset-3">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h4 class="panel-title">Account Details</h4>
+          </div>
+          <div class="panel-body">
+            <div id="status"></div>
+            <form id="profile-form">
+              <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" class="form-control" id="username" required>
+              </div>
+              <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" class="form-control" id="email" required>
+              </div>
+              <button type="submit" class="btn btn-primary btn-block">Save Changes</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="text-center" style="margin-top:40px; padding:15px; background-color:#f8f9fa;">
+    <p>Team Codex Ac 2025 �?" E-Library System</p>
+  </footer>
+
+  <script src="js/nav.js"></script>
+  <script src="js/profile.js"></script>
+</body>
+</html>
