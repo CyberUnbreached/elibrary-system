@@ -40,6 +40,14 @@ async function loadBooks(searchTerm = "") {
         filtered.sort((a, b) => (b.price || 0) - (a.price || 0));
         break;
 
+      case "availability":
+        filtered.sort((a, b) => {
+          const aAvail = a.available ? 1 : 0;
+          const bAvail = b.available ? 1 : 0;
+          return bAvail - aAvail; // available books first
+        });
+        break;
+
       case "qty-desc":
         filtered.sort((a, b) => (b.quantity || 0) - (a.quantity || 0));
         break;
@@ -53,7 +61,7 @@ async function loadBooks(searchTerm = "") {
   currentList = filtered;
 
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">No books found.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">No books found.</td></tr>`;
     return;
   }
 
@@ -71,6 +79,7 @@ async function loadBooks(searchTerm = "") {
       <td>${book.genre}</td>
       <td class="text-right">$${Number(book.price).toFixed(2)}</td>
       <td class="text-center">${qtyVal}</td>
+      <td class="text-center">${book.available ? "Available" : "Unavailable"}</td>
       <td class="text-center">
         <button class="btn btn-primary btn-sm" data-book-id="${book.id}">
           <span class="glyphicon glyphicon-shopping-cart"></span> Buy
