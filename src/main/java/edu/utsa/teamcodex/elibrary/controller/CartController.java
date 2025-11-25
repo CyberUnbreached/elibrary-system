@@ -4,14 +4,17 @@ import edu.utsa.teamcodex.elibrary.model.CartItem;
 import edu.utsa.teamcodex.elibrary.model.Purchase;
 import edu.utsa.teamcodex.elibrary.model.Book;
 import edu.utsa.teamcodex.elibrary.model.User;
+import edu.utsa.teamcodex.elibrary.model.DiscountCode;
 import edu.utsa.teamcodex.elibrary.repository.CartItemRepository;
 import edu.utsa.teamcodex.elibrary.repository.CartRepository;
 import edu.utsa.teamcodex.elibrary.repository.BookRepository;
 import edu.utsa.teamcodex.elibrary.repository.UserRepository;
 import edu.utsa.teamcodex.elibrary.repository.PurchaseRepository;
+import edu.utsa.teamcodex.elibrary.repository.DiscountRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -22,14 +25,17 @@ public class CartController {
     private final BookRepository bookRepository;
     private final UserRepository userRepository;
     private final PurchaseRepository purchaseRepository;
+    private final DiscountRepository discountRepository;
 
     public CartController(CartRepository cartRepository, CartItemRepository cartItemRepository,
-                          BookRepository bookRepository, UserRepository userRepository, PurchaseRepository purchaseRepository ) {
+                          BookRepository bookRepository, UserRepository userRepository,
+                          PurchaseRepository purchaseRepository, DiscountRepository discountRepository ) {
         this.cartRepository = cartRepository;
         this.cartItemRepository = cartItemRepository;
         this.bookRepository = bookRepository;
         this.userRepository = userRepository;
         this.purchaseRepository = purchaseRepository;
+        this.discountRepository = discountRepository;
     }
 
     // View cart for a user
@@ -123,9 +129,17 @@ public class CartController {
 
         // Apply discount if code exists
         double discountPercent = 0.0;
-        if (discountCode != null) {
-            // replace 
-            discountPercent = 10.0; // example 10% off
+        if (discountCode != null && !discountCode.trim().isEmpty()) {
+            DiscountCode discount = discountRepository.findByCodeIgnoreCase(discountCode.trim());
+            if (discount == null || !discount.isActive()) {
+                return ResponseEntity.badRequest().body("Invalid or inactive discount code");
+            }
+            if (discount.getExpirationDate() != null &&
+                    discount.getExpirationDate().isBefore(LocalDate.now())) {
+                return ResponseEntity.badRequest().body("This discount code has expired");
+            }
+            // Clamp to 0-100 to avoid over-discounting
+            discountPercent = Math.max(0.0, Math.min(100.0, discount.getDiscountPercent()));
         }
         double discountedTotal = subtotal * (1 - discountPercent / 100.0);
 
