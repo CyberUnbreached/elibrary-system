@@ -11,10 +11,12 @@ if (typeof renderNav === "function") renderNav();
 
 // Current displayed list (needed so Buy button works correctly)
 let currentList = [];
+let selectedBook = null;
 
 // Load books with search + sorting
 async function loadBooks(searchTerm = "") {
-  const res = await fetch(`${apiBase}/books`);
+  const query = searchTerm ? `?q=${encodeURIComponent(searchTerm)}` : "";
+  const res = await fetch(`${apiBase}/books${query}`);
   let books = await res.json();
 
   const tbody = document.getElementById("books-body");
@@ -22,9 +24,10 @@ async function loadBooks(searchTerm = "") {
 
   const term = searchTerm.toLowerCase();
   let filtered = books.filter(b =>
-    b.title.toLowerCase().includes(term) ||
-    b.author.toLowerCase().includes(term) ||
-    b.genre.toLowerCase().includes(term)
+    (b.title || "").toLowerCase().includes(term) ||
+    (b.author || "").toLowerCase().includes(term) ||
+    (b.genre || "").toLowerCase().includes(term) ||
+    (b.description || "").toLowerCase().includes(term)
   );
 
   // ---------- SORTING ----------
@@ -53,7 +56,7 @@ async function loadBooks(searchTerm = "") {
   currentList = filtered;
 
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">No books found.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">No books found.</td></tr>`;
     return;
   }
 
@@ -64,11 +67,14 @@ async function loadBooks(searchTerm = "") {
       : `<span class="text-muted">-</span>`;
 
     const tr = document.createElement("tr");
+    const desc = (book.description || "").trim() || "-";
+
     tr.innerHTML = `
       <td>${imgCell}</td>
       <td>${book.title}</td>
       <td>${book.author}</td>
       <td>${book.genre}</td>
+      <td class="text-muted" style="max-width:240px;">${desc}</td>
       <td class="text-right">$${Number(book.price).toFixed(2)}</td>
       <td class="text-center">${qtyVal}</td>
       <td class="text-center">

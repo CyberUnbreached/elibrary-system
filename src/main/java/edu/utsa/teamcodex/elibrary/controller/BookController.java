@@ -29,8 +29,15 @@ public class BookController {
 
     // 📚 Get all books
     @GetMapping
-    public List<Book> getAllBooks() {
-        return bookRepository.findAll();
+    public List<Book> getAllBooks(@RequestParam(value = "q", required = false) String searchTerm) {
+        if (searchTerm == null || searchTerm.trim().isEmpty()) {
+            return bookRepository.findAll();
+        }
+
+        String term = searchTerm.trim();
+        return bookRepository
+                .findByTitleContainingIgnoreCaseOrAuthorContainingIgnoreCaseOrGenreContainingIgnoreCaseOrDescriptionContainingIgnoreCase(
+                        term, term, term, term);
     }
 
     // ➕ Add a book (staff only)
@@ -55,6 +62,7 @@ public class BookController {
                     book.setTitle(updatedBook.getTitle());
                     book.setAuthor(updatedBook.getAuthor());
                     book.setGenre(updatedBook.getGenre());
+                    book.setDescription(updatedBook.getDescription());
                     book.setPrice(updatedBook.getPrice());
                     // Persist inventory quantity from the update payload
                     book.setQuantity(updatedBook.getQuantity());

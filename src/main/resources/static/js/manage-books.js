@@ -1,30 +1,26 @@
 // manage-books.js
 const apiBase = "https://elibrary-system.onrender.com";
 
-/* ---------------------------- UTILITIES ---------------------------- */
-
 function formatPrice(v) {
   if (v === undefined || v === null || isNaN(Number(v))) return "-";
   return `$${Number(v).toFixed(2)}`;
 }
 
-/* ---------------------------- MAIN SCRIPT ---------------------------- */
-
 document.addEventListener("DOMContentLoaded", () => {
-
   const user = JSON.parse(localStorage.getItem("user"));
   const alertContainer = document.getElementById("alert-container");
+  const searchInput = document.getElementById("mb-search-box");
 
-  /* ------------------------ ACCESS RESTRICTION ------------------------ */
   if (!user || user.role !== "STAFF") {
     alert("Access denied. Staff only.");
     window.location.href = "home.html";
     return;
   }
 
-  if (typeof renderNav === 'function') { renderNav(); }
+  if (typeof renderNav === "function") {
+    renderNav();
+  }
 
-  /* ------------------------------ ALERT ------------------------------ */
   function showAlert(type, message) {
     alertContainer.innerHTML =
       `<div class="alert alert-${type} alert-dismissible fade in">
@@ -34,22 +30,40 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => $(".alert").alert("close"), 4000);
   }
 
-  /* ---------------------------- LOAD BOOKS ---------------------------- */
-  async function loadBooks() {
-    const res = await fetch(`${apiBase}/books`);
+  async function loadBooks(searchTerm = "") {
+    const query = searchTerm ? `?q=${encodeURIComponent(searchTerm)}` : "";
+    const res = await fetch(`${apiBase}/books${query}`);
     const books = await res.json();
     const tbody = document.getElementById("books-body");
     tbody.innerHTML = "";
 
-    /** Create base rows first **/
+    if (!books.length) {
+      tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted">No books found.</td></tr>`;
+      return;
+    }
+
     books.forEach(book => {
+      const imgCell = book.imageUrl
+        ? `<img src="${book.imageUrl}" style="width:50px;height:70px;object-fit:cover;border-radius:3px;">`
+        : `<span class="text-muted">-</span>`;
+      const qtyVal = (typeof book.quantity === "number") ? book.quantity : 0;
+      const desc = (book.description || "").trim() || "-";
+      const availabilityText = book.available ? "Available" : "Checked Out";
+
       const row = document.createElement("tr");
       row.innerHTML = `
-        <td>${book.title}</td>
-        <td>${book.author}</td>
-        <td>${book.genre}</td>
-        <td>${book.available ? "✅" : "❌"}</td>
-        <td>
+        <td>${imgCell}</td>
+        <td>${book.title || "-"}</td>
+        <td>${book.author || "-"}</td>
+        <td>${book.genre || "-"}</td>
+        <td class="text-muted" style="max-width:260px;">${desc}</td>
+        <td>${formatPrice(book.price)}</td>
+        <td>${qtyVal} in stock</td>
+        <td>${availabilityText}</td>
+        <td class="text-nowrap">
+          <button class="btn btn-primary btn-sm edit-btn" data-id="${book.id}">
+            <span class="glyphicon glyphicon-edit"></span> Edit
+          </button>
           <button class="btn btn-danger btn-sm delete-btn" data-id="${book.id}">
             <span class="glyphicon glyphicon-trash"></span> Delete
           </button>
@@ -58,64 +72,25 @@ document.addEventListener("DOMContentLoaded", () => {
       tbody.appendChild(row);
     });
 
-    /** DELETE BUTTONS **/
-    document.querySelectorAll(".delete-btn").forEach(btn => {
+    tbody.querySelectorAll(".delete-btn").forEach(btn => {
       btn.addEventListener("click", async () => {
         const id = btn.dataset.id;
         if (confirm("Delete this book?")) {
-          const res = await fetch(`${apiBase}/books/${id}`, { method: "DELETE" });
-          if (res.ok) {
+          const resp = await fetch(`${apiBase}/books/${id}`, { method: "DELETE" });
+          if (resp.ok) {
             showAlert("success", "Book deleted.");
-            const term = document.getElementById("mb-search-box").value.trim();
-            await loadBooks();
-            filterRows(term);
-          } else showAlert("danger", "Delete failed.");
+            await loadBooks(searchInput?.value.trim() || "");
+          } else {
+            showAlert("danger", "Delete failed.");
+          }
         }
       });
     });
 
-    /** ADD IMAGE / PRICE / QUANTITY COLUMNS **/
-    Array.from(document.querySelectorAll('#books-body tr')).forEach((tr, i) => {
-      const book = books[i];
-      if (!book) return;
-
-      /* ----- IMAGE COLUMN ----- */
-      const imgTd = document.createElement("td");
-      imgTd.innerHTML = book.imageUrl
-        ? `<img src="${book.imageUrl}" style="width:50px;height:70px;object-fit:cover;border-radius:3px;">`
-        : `<span class="text-muted">-</span>`;
-      tr.insertBefore(imgTd, tr.firstChild);
-
-      /* ----- PRICE COLUMN ----- */
-      const priceTd = document.createElement("td");
-      priceTd.textContent = formatPrice(book.price);
-      tr.insertBefore(priceTd, tr.querySelectorAll("td")[4]); // before Available
-
-      /* ----- QUANTITY COLUMN (display only) ----- */
-      const qtyTd = document.createElement("td");
-      qtyTd.className = "__qty";
-      const qtyVal = (typeof book.quantity === 'number') ? book.quantity : 0;
-      qtyTd.textContent = `${qtyVal} in stock`;
-      tr.insertBefore(qtyTd, tr.querySelectorAll("td")[5]); // after price
-    });
-
-    /** ADD EDIT BUTTON **/
-    Array.from(document.querySelectorAll('#books-body tr')).forEach((tr, i) => {
-      const book = books[i];
-      const td = tr.querySelectorAll("td");
-      const actionsTd = td[td.length - 1];
-
-      const editBtn = document.createElement("button");
-      editBtn.className = "btn btn-primary btn-sm edit-btn";
-      editBtn.innerHTML = `<span class="glyphicon glyphicon-edit"></span> Edit`;
-      editBtn.dataset.id = book.id;
-
-      actionsTd.insertBefore(editBtn, actionsTd.firstChild);
-      actionsTd.insertBefore(document.createTextNode(" "), editBtn.nextSibling);
-
-      editBtn.addEventListener("click", async () => {
+    tbody.querySelectorAll(".edit-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
         try {
-          const res = await fetch(`${apiBase}/books/${book.id}`);
+          const res = await fetch(`${apiBase}/books/${btn.dataset.id}`);
           if (!res.ok) return showAlert("danger", "Failed to load book.");
           const b = await res.json();
 
@@ -128,6 +103,7 @@ document.addEventListener("DOMContentLoaded", () => {
           set("edit-title", b.title);
           set("edit-author", b.author);
           set("edit-genre", b.genre);
+          set("edit-description", b.description);
           set("edit-price", b.price);
           set("edit-imageUrl", b.imageUrl);
           set("edit-available", b.available);
@@ -141,44 +117,30 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  /* ---------------------- SEARCH FILTER ---------------------- */
-  function filterRows(term) {
-    const q = term.toLowerCase();
-    document.querySelectorAll("#books-body tr").forEach(tr => {
-      const td = tr.querySelectorAll("td");
-      const title = td[1]?.textContent.toLowerCase() || "";
-      const author = td[2]?.textContent.toLowerCase() || "";
-      const genre = td[3]?.textContent.toLowerCase() || "";
-      tr.style.display = (title.includes(q) || author.includes(q) || genre.includes(q)) ? "" : "none";
-    });
-  }
+  searchInput?.addEventListener("input", e => {
+    loadBooks(e.target.value.trim());
+  });
 
-  const mbSearch = document.getElementById("mb-search-box");
-  mbSearch?.addEventListener("input", e => filterRows(e.target.value.trim()));
-
-  /* ----------------------- INITIAL LOAD ----------------------- */
   (async () => {
     await loadBooks();
-    filterRows(mbSearch?.value.trim() || "");
   })();
 
-  /* ----------------------- OPEN ADD BOOK MODAL ----------------------- */
   document.getElementById("open-add-modal").addEventListener("click", () => {
     document.getElementById("add-title").value = "";
     document.getElementById("add-author").value = "";
     document.getElementById("add-genre").value = "";
+    document.getElementById("add-description").value = "";
     document.getElementById("add-price").value = "";
     document.getElementById("add-quantity").value = "0";
     document.getElementById("add-imageUrl").value = "";
     $("#addBookModal").modal("show");
   });
 
-  /* ----------------------- SAVE NEW BOOK ----------------------- */
   document.getElementById("save-add-btn").addEventListener("click", async () => {
-
     const title = document.getElementById("add-title").value.trim();
     const author = document.getElementById("add-author").value.trim();
     const genre = document.getElementById("add-genre").value.trim();
+    const description = document.getElementById("add-description").value.trim();
     const price = Number(document.getElementById("add-price").value.trim());
     const quantity = Number(document.getElementById("add-quantity").value.trim());
     const imageUrlInput = document.getElementById("add-imageUrl").value.trim();
@@ -188,12 +150,11 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // Default placeholder image
-    let imageUrl = imageUrlInput || 
+    let imageUrl = imageUrlInput ||
       "https://hds.hel.fi/images/foundation/visual-assets/placeholders/image-m@3x.png";
 
     const newBook = {
-      title, author, genre, price, quantity, imageUrl,
+      title, author, genre, description, price, quantity, imageUrl,
       available: true
     };
 
@@ -206,20 +167,19 @@ document.addEventListener("DOMContentLoaded", () => {
     if (res.ok) {
       $("#addBookModal").modal("hide");
       showAlert("success", "Book added successfully!");
-      await loadBooks();
+      await loadBooks(searchInput?.value.trim() || "");
     } else {
       showAlert("danger", "Failed to add book.");
     }
   });
 
-  /* ----------------------- SAVE EDITED BOOK ----------------------- */
   const saveBtn = document.getElementById("save-edit-btn");
   saveBtn.addEventListener("click", async () => {
-
     const id = document.getElementById("edit-book-id").value;
     const title = document.getElementById("edit-title").value.trim();
     const author = document.getElementById("edit-author").value.trim();
     const genre = document.getElementById("edit-genre").value.trim();
+    const description = document.getElementById("edit-description").value.trim();
     const price = Number(document.getElementById("edit-price").value.trim());
     const imageUrl = document.getElementById("edit-imageUrl").value.trim();
     const available = document.getElementById("edit-available").value === "true";
@@ -235,7 +195,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const payload = { title, author, genre, price, available, imageUrl, quantity };
+    const payload = { title, author, genre, description, price, available, imageUrl, quantity };
 
     const res = await fetch(`${apiBase}/books/${id}`, {
       method: "PUT",
@@ -246,8 +206,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (res.ok) {
       $("#editBookModal").modal("hide");
       showAlert("success", "Book updated!");
-      await loadBooks();
+      await loadBooks(searchInput?.value.trim() || "");
     } else showAlert("danger", "Update failed.");
   });
-
 });

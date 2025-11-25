@@ -6,25 +6,31 @@ if (!user || user.role !== "CUSTOMER") {
   window.location.href = "login.html";
 }
 
-// Navbar
-if (typeof renderNav === 'function') { renderNav(); }
+if (typeof renderNav === "function") { renderNav(); }
 
-// Load all books
 async function loadBooks(searchTerm = "") {
-  const res = await fetch(`${apiBase}/books`);
+  const query = searchTerm ? `?q=${encodeURIComponent(searchTerm)}` : "";
+  const res = await fetch(`${apiBase}/books${query}`);
   const books = await res.json();
   const tbody = document.getElementById("books-body");
   tbody.innerHTML = "";
 
   const term = searchTerm.toLowerCase();
   const filtered = books.filter(b =>
-    b.title.toLowerCase().includes(term) ||
-    b.author.toLowerCase().includes(term) ||
-    b.genre.toLowerCase().includes(term)
+    (b.title || "").toLowerCase().includes(term) ||
+    (b.author || "").toLowerCase().includes(term) ||
+    (b.genre || "").toLowerCase().includes(term) ||
+    (b.description || "").toLowerCase().includes(term)
   );
+
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">No books found.</td></tr>`;
+    return;
+  }
 
   filtered.forEach(book => {
     const tr = document.createElement("tr");
+    const desc = (book.description || "").trim() || "-";
     let action = "";
 
     if (book.available) {
@@ -37,14 +43,14 @@ async function loadBooks(searchTerm = "") {
       <td>${book.title}</td>
       <td>${book.author}</td>
       <td>${book.genre}</td>
-      <td>${book.available ? "✅ Available" : "❌ Checked Out"}</td>
+      <td class="text-muted" style="max-width:240px;">${desc}</td>
+      <td>${book.available ? "Available" : "Checked Out"}</td>
       <td>${action}</td>
     `;
     tbody.appendChild(tr);
   });
 }
 
-// Borrow book (open modal)
 let selectedBookId = null;
 
 async function borrowBook(bookId) {
@@ -71,7 +77,6 @@ async function borrowBook(bookId) {
   $("#borrowModal").modal("show");
 }
 
-// Confirm borrow
 document.getElementById("confirmBorrowBtn").addEventListener("click", async () => {
   const chosenDate = document.getElementById("returnDate").value;
   if (!chosenDate) {
@@ -100,7 +105,6 @@ document.getElementById("confirmBorrowBtn").addEventListener("click", async () =
   }
 });
 
-// Load user's borrowed books
 async function loadMyBooks() {
   const res = await fetch(`${apiBase}/transactions/user/${user.id}`);
   const transactions = await res.json();
@@ -122,7 +126,6 @@ async function loadMyBooks() {
     });
 }
 
-// Return book
 async function returnBook(bookId) {
   try {
     const response = await fetch(`${apiBase}/books/${bookId}/return/${user.id}`, { method: "PUT" });
@@ -140,7 +143,6 @@ async function returnBook(bookId) {
   }
 }
 
-// Search and load
 document.addEventListener("DOMContentLoaded", () => {
   const searchBox = document.getElementById("search-box");
   if (searchBox) {

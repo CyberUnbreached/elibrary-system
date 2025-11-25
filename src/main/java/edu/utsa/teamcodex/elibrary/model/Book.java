@@ -14,6 +14,7 @@ public class Book {
     private String title;
     private String author;
     private String genre;
+    private String description;
 
     private boolean available = true;
     private LocalDate dueDate;
@@ -34,10 +35,11 @@ public class Book {
     // ===== Constructors =====
     public Book() {}
 
-    public Book(String title, String author, String genre, double price, String imageUrl, int quantity) {
+    public Book(String title, String author, String genre, String description, double price, String imageUrl, int quantity) {
         this.title = title;
         this.author = author;
         this.genre = genre;
+        this.description = description;
         this.price = price;
         this.imageUrl = imageUrl;
         this.quantity = quantity;
@@ -57,6 +59,8 @@ public class Book {
     public String getGenre() { return genre; }
     public void setGenre(String genre) { this.genre = genre; }
 
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
     public boolean isAvailable() { return available; }
     public void setAvailable(boolean available) { this.available = available; }
 
