@@ -1,5 +1,6 @@
 const apiBase = "https://elibrary-system.onrender.com";
 const user = JSON.parse(localStorage.getItem("user"));
+let currentBooks = [];
 
 if (typeof renderNav === "function") {
   renderNav();
@@ -53,6 +54,8 @@ async function loadBooks(searchTerm = "") {
     }
   }
 
+  currentBooks = filteredBooks;
+
   if (!filteredBooks.length) {
     tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">No books found.</td></tr>`;
     return;
@@ -70,7 +73,7 @@ async function loadBooks(searchTerm = "") {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${imgCell}</td>
-      <td>${book.title || "-"}</td>
+      <td><a href="#" class="book-title-link" data-book-id="${book.id}">${book.title || "-"}</a></td>
       <td>${book.author || "-"}</td>
       <td>${book.genre || "-"}</td>
       <td class="text-muted" style="max-width:260px;">${desc}</td>
@@ -79,8 +82,41 @@ async function loadBooks(searchTerm = "") {
       <td>${availabilityText}</td>
     `;
 
+    const titleLink = tr.querySelector(".book-title-link");
+    if (titleLink) {
+      titleLink.addEventListener("click", e => {
+        e.preventDefault();
+        openBookDetail(book.id);
+      });
+    }
+
     tbody.appendChild(tr);
   });
+}
+
+function openBookDetail(bookId) {
+  const book = currentBooks.find(b => String(b.id) === String(bookId));
+  if (!book) return;
+
+  const placeholder = `<div class="text-muted" style="width:80px;height:110px;border:1px dashed #ccc;display:flex;align-items:center;justify-content:center;border-radius:3px;">No image</div>`;
+  const imgHtml = book.imageUrl
+    ? `<img src="${book.imageUrl}" alt="${book.title || "Book"}" style="width:80px;height:110px;object-fit:cover;border-radius:3px;">`
+    : placeholder;
+
+  document.getElementById("detail-title").textContent = book.title || "Book Details";
+  document.getElementById("detail-image").innerHTML = imgHtml;
+  document.getElementById("detail-author").textContent = `Author: ${book.author || "-"}`;
+  document.getElementById("detail-genre").textContent = `Genre: ${book.genre || "-"}`;
+  document.getElementById("detail-price").textContent = `Price: ${formatPrice(book.price)}`;
+  const qtyVal = typeof book.quantity === "number" ? book.quantity : 0;
+  document.getElementById("detail-quantity").textContent = `Quantity: ${qtyVal}`;
+  const availabilityText = book.available ? "Available to Borrow" : "Checked Out";
+  document.getElementById("detail-availability").textContent = `Borrow Availability: ${availabilityText}`;
+
+  const desc = (book.description || "").trim() || "No description provided.";
+  document.getElementById("detail-description").textContent = desc;
+
+  $("#bookDetailModal").modal("show");
 }
 
 document.addEventListener("DOMContentLoaded", () => {

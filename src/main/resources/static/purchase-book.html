@@ -85,6 +85,31 @@
 
   </div>
 
+  <!-- Book Detail Modal -->
+  <div class="modal fade" id="bookDetailModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+          <h4 class="modal-title" id="detail-title">Book Details</h4>
+        </div>
+        <div class="modal-body">
+          <div class="media">
+            <div class="media-left" id="detail-image" style="width:90px;"></div>
+            <div class="media-body">
+              <p id="detail-author"></p>
+              <p id="detail-genre"></p>
+              <p id="detail-price"></p>
+              <p id="detail-quantity"></p>
+            </div>
+          </div>
+          <hr>
+          <p id="detail-description" class="text-muted" style="white-space:pre-line;"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Purchase Modal -->
   <div class="modal fade" id="purchaseModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">

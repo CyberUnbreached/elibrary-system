@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>E-Library Home</title>
+  <script src="js/jquery-3.7.1.min.js"></script>
   <link rel="stylesheet" href="css/bootstrap.min.css">
   <link rel="stylesheet" href="css/style.css">
   <script src="js/bootstrap.min.js"></script>
@@ -24,7 +25,7 @@
 
   <div class="container">
     <div class="page-header text-center">
-      <h2>📚 Welcome to the E-Library</h2>
+      <h2>dY"s Welcome to the E-Library</h2>
       <p class="text-muted">Browse our collection and see which books are available to borrow.</p>
     </div>
 
@@ -44,11 +45,11 @@
       <div class="col-md-4 col-md-offset-4 text-center">
         <select id="sort-select" class="form-control">
           <option value="">Sort By...</option>
-          <option value="price-asc">Price: Low → High</option>
-          <option value="price-desc">Price: High → Low</option>
+          <option value="price-asc">Price: Low �+' High</option>
+          <option value="price-desc">Price: High �+' Low</option>
           <option value="availability">Availability</option>
-          <option value="qty-desc">Quantity: High → Low</option>
-          <option value="qty-asc">Quantity: Low → High</option>
+          <option value="qty-desc">Quantity: High �+' Low</option>
+          <option value="qty-asc">Quantity: Low �+' High</option>
         </select>
       </div>
     </div>
@@ -71,11 +72,38 @@
     </table>
   </div>
 
+  <!-- Book Detail Modal -->
+  <div class="modal fade" id="bookDetailModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+          <h4 class="modal-title" id="detail-title">Book Details</h4>
+        </div>
+        <div class="modal-body">
+          <div class="media">
+            <div class="media-left" id="detail-image" style="width:90px;"></div>
+            <div class="media-body">
+              <p id="detail-author"></p>
+              <p id="detail-genre"></p>
+              <p id="detail-price"></p>
+              <p id="detail-quantity"></p>
+              <p id="detail-availability"></p>
+            </div>
+          </div>
+          <hr>
+          <p id="detail-description" class="text-muted" style="white-space:pre-line;"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <footer class="text-center" style="margin-top:40px; padding:15px; background-color:#f8f9fa;">
-    <p>Team Codex © 2025 – E-Library System</p>
+    <p>Team Codex Ac 2025 �?" E-Library System</p>
   </footer>
 
   <script src="js/nav.js"></script>
   <script src="js/home.js"></script>
 </body>
 </html>
+

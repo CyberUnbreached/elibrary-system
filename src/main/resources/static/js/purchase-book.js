@@ -13,6 +13,11 @@ if (typeof renderNav === "function") renderNav();
 let currentList = [];
 let selectedBook = null;
 
+function formatPrice(v) {
+  if (v === undefined || v === null || isNaN(Number(v))) return "-";
+  return `$${Number(v).toFixed(2)}`;
+}
+
 // Load books with search + sorting
 async function loadBooks(searchTerm = "") {
   const query = searchTerm ? `?q=${encodeURIComponent(searchTerm)}` : "";
@@ -71,11 +76,11 @@ async function loadBooks(searchTerm = "") {
 
     tr.innerHTML = `
       <td>${imgCell}</td>
-      <td>${book.title}</td>
+      <td><a href="#" class="book-title-link" data-book-id="${book.id}">${book.title || "-"}</a></td>
       <td>${book.author}</td>
       <td>${book.genre}</td>
       <td class="text-muted" style="max-width:240px;">${desc}</td>
-      <td class="text-right">$${Number(book.price).toFixed(2)}</td>
+      <td class="text-right">${formatPrice(book.price)}</td>
       <td class="text-center">${qtyVal}</td>
       <td class="text-center">
         <button class="btn btn-primary btn-sm" data-book-id="${book.id}">
@@ -93,6 +98,14 @@ async function loadBooks(searchTerm = "") {
       openPurchaseModal(btn.getAttribute("data-book-id"));
     });
   });
+
+  // Connect title clicks for details
+  tbody.querySelectorAll(".book-title-link").forEach(link => {
+    link.addEventListener("click", e => {
+      e.preventDefault();
+      openBookDetail(link.getAttribute("data-book-id"));
+    });
+  });
 }
 
 function openPurchaseModal(bookId) {
@@ -107,6 +120,29 @@ function openPurchaseModal(bookId) {
     `${book.title} by ${book.author} (${book.genre})`;
 
   $("#purchaseModal").modal("show");
+}
+
+function openBookDetail(bookId) {
+  const book = currentList.find(b => String(b.id) === String(bookId));
+  if (!book) return;
+
+  const placeholder = `<div class="text-muted" style="width:80px;height:110px;border:1px dashed #ccc;display:flex;align-items:center;justify-content:center;border-radius:3px;">No image</div>`;
+  const imgHtml = book.imageUrl
+    ? `<img src="${book.imageUrl}" style="width:80px;height:110px;object-fit:cover;border-radius:3px;">`
+    : placeholder;
+
+  document.getElementById("detail-title").textContent = book.title || "Book Details";
+  document.getElementById("detail-image").innerHTML = imgHtml;
+  document.getElementById("detail-author").textContent = `Author: ${book.author || "-"}`;
+  document.getElementById("detail-genre").textContent = `Genre: ${book.genre || "-"}`;
+  document.getElementById("detail-price").textContent = `Price: ${formatPrice(book.price)}`;
+  const qtyVal = typeof book.quantity === "number" ? book.quantity : 0;
+  document.getElementById("detail-quantity").textContent = `Quantity: ${qtyVal}`;
+
+  const desc = (book.description || "").trim() || "No description provided.";
+  document.getElementById("detail-description").textContent = desc;
+
+  $("#bookDetailModal").modal("show");
 }
 
 document.getElementById("purchase-form").addEventListener("submit", async e => {
