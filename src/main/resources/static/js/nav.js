@@ -20,15 +20,13 @@
         { href: 'borrow-book.html', text: 'Book Lending', icon: 'glyphicon-book' },
         { href: 'customer-transactions.html', text: 'History', icon: 'glyphicon-time' },
         { href: 'purchase-book.html', text: 'Purchase', icon: 'glyphicon-usd' },
-        { href: 'customer-cart.html', text: 'Cart', icon: 'glyphicon-shopping-cart' },
-        { href: 'profile.html', text: 'Profile', icon: 'glyphicon-cog' }
+        { href: 'customer-cart.html', text: 'Cart', icon: 'glyphicon-shopping-cart' }
       ];
     } else if (user.role === 'STAFF') {
       links = [
         { href: 'staff.html', text: 'Dashboard', icon: 'glyphicon-dashboard' },
         { href: 'manage-books.html', text: 'Manage Books', icon: 'glyphicon-book' },
-        { href: 'overdue.html', text: 'Overdue', icon: 'glyphicon-warning-sign' },
-        { href: 'profile.html', text: 'Profile', icon: 'glyphicon-cog' }
+        { href: 'overdue.html', text: 'Overdue', icon: 'glyphicon-warning-sign' }
       ];
     }
 
@@ -52,7 +50,8 @@
     }
 
     var linksHtml = buildLinks(user, current);
-    var userHtml = '<li><a><span class="glyphicon glyphicon-user"></span> ' + (user.username || 'User') + ' (' + (user.role || '') + ')</a></li>';
+    var profileActive = (current === 'profile.html') ? ' class="active"' : '';
+    var userHtml = '<li' + profileActive + '><a href="profile.html"><span class="glyphicon glyphicon-user"></span> ' + (user.username || 'User') + ' (' + (user.role || '') + ')</a></li>';
     var logoutHtml = '<li><a href="#" id="logout-btn"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>';
 
     navAuth.innerHTML = linksHtml + '\n' + userHtml + '\n' + logoutHtml;

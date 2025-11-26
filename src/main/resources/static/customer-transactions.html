@@ -21,29 +21,10 @@
   </nav>
 
   <div class="container">
-    <div class="page-header text-center">
-      <h2>📜 My Transaction History</h2>
-      <p class="text-muted">View all books you’ve borrowed and returned.</p>
-    </div>
-
-    <!-- Borrow / Return History -->
-    <table class="table table-striped table-hover">
-      <thead>
-        <tr>
-          <th>Book Title</th>
-          <th>Author</th>
-          <th>Borrow Date</th>
-          <th>Return Date</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody id="transactions-body"></tbody>
-    </table>
-
     <!-- Purchase History -->
     <div class="page-header text-center">
-      <h3>My Purchase History</h3>
-      <p class="text-muted">View all books you’ve purchased.</p>
+      <h2>📥 My Purchase History</h2>
+      <p class="text-muted">View all books you have purchased.</p>
     </div>
     <table class="table table-striped table-hover">
       <thead>
@@ -55,6 +36,24 @@
         </tr>
       </thead>
       <tbody id="purchases-body"></tbody>
+    </table>
+    
+    <!-- Borrow / Return History -->
+    <div class="page-header text-center">
+      <h2>📜 My Borrow History</h2>
+      <p class="text-muted">View all books you have borrowed and returned.</p>
+    </div>
+    <table class="table table-striped table-hover">
+      <thead>
+        <tr>
+          <th>Book Title</th>
+          <th>Author</th>
+          <th>Borrow Date</th>
+          <th>Return Date</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="transactions-body"></tbody>
     </table>
   </div>
 
