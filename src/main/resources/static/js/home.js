@@ -18,7 +18,7 @@ async function loadBooks(searchTerm = "") {
 
   const tbody = document.getElementById("books-body");
   if (!tbody) return;
-  tbody.innerHTML = "";
+  tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">Loading...</td></tr>`;
 
   const term = (searchTerm || "").toLowerCase();
   let filteredBooks = books.filter(book =>
@@ -61,6 +61,8 @@ async function loadBooks(searchTerm = "") {
     return;
   }
 
+  tbody.innerHTML = "";
+
   filteredBooks.forEach(book => {
     const imgCell = book.imageUrl
       ? `<img src="${book.imageUrl}" alt="${book.title || "Book"}" style="width:50px;height:70px;object-fit:cover;border-radius:3px;">`
@@ -81,15 +83,6 @@ async function loadBooks(searchTerm = "") {
       <td>${qtyVal} in stock</td>
       <td>${availabilityText}</td>
     `;
-
-    const titleLink = tr.querySelector(".book-title-link");
-    if (titleLink) {
-      titleLink.addEventListener("click", e => {
-        e.preventDefault();
-        openBookDetail(book.id);
-      });
-    }
-
     tbody.appendChild(tr);
   });
 }
@@ -122,6 +115,7 @@ function openBookDetail(bookId) {
 document.addEventListener("DOMContentLoaded", () => {
   const searchBox = document.getElementById("search-box");
   const sortSelect = document.getElementById("sort-select");
+  const tbody = document.getElementById("books-body");
 
   if (searchBox) {
     searchBox.addEventListener("input", e => {
@@ -133,6 +127,16 @@ document.addEventListener("DOMContentLoaded", () => {
     sortSelect.addEventListener("change", () => {
       const term = searchBox ? searchBox.value.trim() : "";
       loadBooks(term);
+    });
+  }
+
+  if (tbody) {
+    tbody.addEventListener("click", e => {
+      const link = e.target.closest(".book-title-link");
+      if (link) {
+        e.preventDefault();
+        openBookDetail(link.getAttribute("data-book-id"));
+      }
     });
   }
 
