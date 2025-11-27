@@ -194,6 +194,10 @@ public class CartController {
 
         // Clear cart
         cartItemRepository.deleteAll(items);
+        if (cart.getItems() != null) {
+            cart.getItems().clear(); // keep in-memory cart empty after checkout
+        }
+        cartRepository.save(cart);
 
         return ResponseEntity.ok("Checkout complete. Total: $" + String.format("%.2f", totalWithTax));
     }
