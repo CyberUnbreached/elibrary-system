@@ -43,19 +43,41 @@ function groupPurchasesByTransaction(purchases) {
 }
 
 /* ============================================================
-   SHOW TRANSACTION DETAILS POPUP
+   SHOW TRANSACTION DETAILS (MODAL)
    ============================================================ */
 function showPurchaseDetails(transactionId) {
   const items = purchasesCache.filter((p) => p.transactionId === transactionId);
-  let msg = `Purchase Details (Transaction ${transactionId})\n\n`;
+
+  // Update modal title
+  document.getElementById("details-transaction-id").textContent =
+    `(Transaction ${transactionId})`;
+
+  const tbody = document.getElementById("purchase-details-body");
+  tbody.innerHTML = "";
 
   items.forEach((p) => {
-    msg += `${p.book ? p.book.title : "Unknown Book"} — Qty: ${
-      p.quantity || 1
-    }, Paid: $${p.price}\n`;
+    const isSale = p.saleApplied ? "Yes" : "No";
+    const discountCode = p.discountCodeUsed ? p.discountCodeUsed : "-";
+    const discountPct = p.discountPercentApplied
+      ? p.discountPercentApplied + "%"
+      : "-";
+
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${p.book ? p.book.title : "Unknown"}</td>
+      <td>${p.book ? p.book.author : "-"}</td>
+      <td>${p.quantity || 1}</td>
+      <td>$${(p.price || 0).toFixed(2)}</td>
+      <td>${isSale}</td>
+      <td>${discountCode}</td>
+      <td>${discountPct}</td>
+    `;
+
+    tbody.appendChild(tr);
   });
 
-  alert(msg);
+  $("#purchaseDetailsModal").modal("show");
 }
 
 /* ============================================================
@@ -95,10 +117,8 @@ function renderPurchases() {
     return;
   }
 
-  // Group by transactionId
   const grouped = groupPurchasesByTransaction(purchasesCache);
 
-  // Sort transactions
   const sorted = [...grouped].sort((a, b) => {
     const direction = purchaseSortDirection === "asc" ? 1 : -1;
 
@@ -108,7 +128,6 @@ function renderPurchases() {
     return (dateA - dateB) * direction;
   });
 
-  // Render each transaction as one row
   sorted.forEach((tx) => {
     const tr = document.createElement("tr");
 
@@ -193,11 +212,9 @@ async function loadTransactions() {
 }
 
 /* ============================================================
-   PAGE LOAD (PURCHASE HISTORY FIRST, THEN BORROW HISTORY)
+   PAGE LOAD
    ============================================================ */
 window.onload = function () {
-  loadPurchases().then(() => {
-    loadTransactions(); // Borrow history loads AFTER purchases
-  });
+  loadPurchases().then(() => loadTransactions());
   attachPurchaseSortHandlers();
 };
