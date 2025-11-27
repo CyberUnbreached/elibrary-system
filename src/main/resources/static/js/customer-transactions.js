@@ -123,28 +123,28 @@ function renderPurchases() {
     return;
   }
 
-  // Sort grouped transactions
+  // FIRST: group
+  const grouped = groupPurchasesByTransaction(purchasesCache);
+
+  // THEN: sort grouped transactions
   const sorted = [...grouped].sort((a, b) => {
     const direction = purchaseSortDirection === "asc" ? 1 : -1;
 
     if (purchaseSortField === "quantity") {
-      // sort by total quantity
       return (a.totalQuantity - b.totalQuantity) * direction;
     }
 
     if (purchaseSortField === "amount") {
-      // sort by total amount paid
       return (a.totalAmount - b.totalAmount) * direction;
     }
 
-    // default: sort by date
+    // default: sort by purchase date
     const dateA = a.purchaseDate ? new Date(a.purchaseDate) : new Date(0);
     const dateB = b.purchaseDate ? new Date(b.purchaseDate) : new Date(0);
-
     return (dateA - dateB) * direction;
   });
 
-
+  // Render to table
   sorted.forEach((tx) => {
     const tr = document.createElement("tr");
 
@@ -164,6 +164,7 @@ function renderPurchases() {
     tbody.appendChild(tr);
   });
 }
+
 
 /* ============================================================
    SORT HANDLERS
