@@ -150,6 +150,8 @@ async function loadRecentPurchases() {
 // ===== Enhanced sorting implementation (appended) =====
 let __borrowTxs = [];
 let __purchaseTxs = [];
+let __booksCache = [];
+let __salesCache = [];
 
 function renderBorrowTransactionsEnhanced() {
   const tbody = document.getElementById('recent-transactions-body');
@@ -265,6 +267,11 @@ window.onload = function () {
 
   const createBtn = document.getElementById('create-discount-btn');
   if (createBtn) createBtn.addEventListener('click', createDiscount);
+
+  const saleForm = document.getElementById('sale-form');
+  if (saleForm) saleForm.addEventListener('submit', createSale);
+  loadBooksForSaleSelect();
+  loadSales();
 };
 
 // --- Create Discount Code ---
@@ -317,4 +324,171 @@ function showDiscountAlert(message, type) {
   alertBox.textContent = message;
   alertBox.className = `alert alert-${type}`;
   alertBox.style.display = 'block';
+}
+
+// --- Sales Management ---
+function showSaleAlert(message, type) {
+  const alertBox = document.getElementById('sale-alert');
+  if (!alertBox) return;
+  alertBox.textContent = message;
+  alertBox.className = `alert alert-${type}`;
+  alertBox.style.display = 'block';
+}
+
+async function loadBooksForSaleSelect() {
+  const select = document.getElementById('sale-book');
+  if (!select) return;
+  try {
+    const res = await fetch(`${apiBase}/books`);
+    __booksCache = await res.json();
+    select.innerHTML = `<option value="">Select a book...</option>`;
+    __booksCache.forEach(b => {
+      const option = document.createElement('option');
+      option.value = b.id;
+      const price = typeof b.price === 'number' ? `$${b.price.toFixed(2)}` : '-';
+      option.textContent = `${b.title || 'Untitled'} (${price})`;
+      select.appendChild(option);
+    });
+  } catch (err) {
+    console.error('Failed to load books for sale form', err);
+    showSaleAlert('Could not load books for sale form.', 'danger');
+  }
+}
+
+async function loadSales() {
+  const tbody = document.getElementById('sales-table-body');
+  if (tbody) {
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">Loading...</td></tr>`;
+  }
+  try {
+    const res = await fetch(`${apiBase}/sales`);
+    if (!res.ok) throw new Error(await res.text());
+    __salesCache = await res.json();
+    renderSales();
+  } catch (err) {
+    console.error('Failed to load sales', err);
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Failed to load sales.</td></tr>`;
+    }
+    showSaleAlert('Could not load sales data.', 'danger');
+  }
+}
+
+function renderSales() {
+  const tbody = document.getElementById('sales-table-body');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  if (!__salesCache || __salesCache.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">No sales configured.</td></tr>`;
+    return;
+  }
+
+  __salesCache
+    .sort((a, b) => (a.startsAt || '').localeCompare(b.startsAt || ''))
+    .forEach(sale => {
+      const bookTitle = sale.book?.title || (sale.bookTitle ?? 'Unknown Book');
+      const basePrice =
+        typeof sale.book?.price === 'number'
+          ? sale.book.price
+          : typeof sale.basePrice === 'number'
+            ? sale.basePrice
+            : null;
+      const basePriceText = basePrice !== null ? `$${basePrice.toFixed(2)}` : '-';
+      const salePriceText =
+        typeof sale.salePrice === 'number' ? `$${sale.salePrice.toFixed(2)}` : '-';
+
+      const status = sale.active === false ? 'Inactive' : 'Active';
+      const windowText = `${sale.startsAt || 'Now'} \u2192 ${sale.endsAt || 'No end'}`;
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${bookTitle}</td>
+        <td>${salePriceText}</td>
+        <td>${basePriceText}</td>
+        <td>${windowText}</td>
+        <td>${status}</td>
+        <td class="text-right">
+          <button class="btn btn-xs btn-default" data-end-sale="${sale.id}">
+            End Sale
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+  tbody.querySelectorAll('[data-end-sale]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      endSale(btn.getAttribute('data-end-sale'));
+    });
+  });
+}
+
+async function createSale(event) {
+  event?.preventDefault();
+  const bookId = document.getElementById('sale-book')?.value;
+  const salePriceInput = document.getElementById('sale-price')?.value;
+  const startsAt = document.getElementById('sale-start')?.value || null;
+  const endsAt = document.getElementById('sale-end')?.value || null;
+  const alertBox = document.getElementById('sale-alert');
+
+  if (alertBox) {
+    alertBox.style.display = 'none';
+    alertBox.className = 'alert';
+    alertBox.textContent = '';
+  }
+
+  const salePrice = parseFloat(salePriceInput);
+  if (!bookId) {
+    return showSaleAlert('Please choose a book.', 'danger');
+  }
+  if (!Number.isFinite(salePrice) || salePrice <= 0) {
+    return showSaleAlert('Enter a valid sale price greater than 0.', 'danger');
+  }
+
+  const book = __booksCache.find(b => String(b.id) === String(bookId));
+  if (book && typeof book.price === 'number' && salePrice >= book.price) {
+    return showSaleAlert('Sale price must be lower than the regular price.', 'danger');
+  }
+  if (startsAt && endsAt && Date.parse(endsAt) < Date.parse(startsAt)) {
+    return showSaleAlert('End date must be after start date.', 'danger');
+  }
+
+  try {
+    const res = await fetch(`${apiBase}/sales`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        bookId: Number(bookId),
+        salePrice,
+        startsAt,
+        endsAt,
+      }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text || `Failed with status ${res.status}`);
+    }
+
+    showSaleAlert('Sale created.', 'success');
+    document.getElementById('sale-form').reset();
+    await loadSales();
+  } catch (err) {
+    console.error('Error creating sale', err);
+    showSaleAlert(`Error creating sale: ${err.message}`, 'danger');
+  }
+}
+
+async function endSale(id) {
+  if (!id) return;
+  try {
+    const res = await fetch(`${apiBase}/sales/${id}/deactivate`, { method: 'POST' });
+    if (!res.ok) throw new Error(await res.text());
+    await loadSales();
+    showSaleAlert('Sale ended.', 'success');
+  } catch (err) {
+    console.error('Failed to end sale', err);
+    showSaleAlert(`Failed to end sale: ${err.message}`, 'danger');
+  }
 }

@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -51,13 +52,25 @@ public class PurchaseController {
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new RuntimeException("Book not found"));
 
+        double fallback = resolveEffectivePrice(book);
         double price = (purchaseRequest != null && purchaseRequest.getPrice() > 0)
                 ? purchaseRequest.getPrice()
-                : 9.99; // default fallback price if not provided
+                : fallback;
 
         Purchase purchase = new Purchase(user, book, price, LocalDate.now());
         purchaseRepository.save(purchase);
 
         return ResponseEntity.ok("Purchase successful for book: " + book.getTitle());
+    }
+
+    private double resolveEffectivePrice(Book book) {
+        double base = book.getPrice();
+        Double salePrice = book.getSalePrice();
+        if (salePrice == null) return base;
+        if (book.getOnSale() != null && !book.getOnSale()) return base;
+        LocalDateTime now = LocalDateTime.now();
+        if (book.getSaleStart() != null && book.getSaleStart().isAfter(now)) return base;
+        if (book.getSaleEnd() != null && book.getSaleEnd().isBefore(now)) return base;
+        return Math.min(base, salePrice);
     }
 }

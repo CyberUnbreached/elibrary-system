@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -48,6 +49,19 @@ public class CartController {
                     Cart newCart = new Cart(user);
                     return cartRepository.save(newCart);
                 });
+
+        // Refresh item prices to reflect current sale/base prices
+        if (cart.getItems() != null) {
+            for (CartItem item : cart.getItems()) {
+                Book freshBook = bookRepository.findById(item.getBook().getId())
+                        .orElse(item.getBook());
+                double effectivePrice = resolveEffectivePrice(freshBook);
+                if (item.getPrice() != effectivePrice) {
+                    item.setPrice(effectivePrice);
+                    cartItemRepository.save(item);
+                }
+            }
+        }
         return ResponseEntity.ok(cart);
     }
 
@@ -64,7 +78,7 @@ public class CartController {
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseGet(() -> cartRepository.save(new Cart(user)));
 
-        CartItem item = new CartItem(cart, book, quantity, book.getPrice());
+        CartItem item = new CartItem(cart, book, quantity, resolveEffectivePrice(book));
         return ResponseEntity.ok(cartItemRepository.save(item));
     }
 
@@ -123,9 +137,15 @@ public class CartController {
             bookRepository.save(freshBook);
         }
 
-        double subtotal = items.stream()
-                .mapToDouble(item -> item.getPrice() * item.getQuantity())
-                .sum();
+        double subtotal = 0.0;
+        for (CartItem item : items) {
+            Book freshBook = bookRepository.findById(item.getBook().getId())
+                    .orElseThrow(() -> new RuntimeException("Book not found"));
+            double effectivePrice = resolveEffectivePrice(freshBook);
+            item.setPrice(effectivePrice); // keep cart price in sync with current sale/base price
+            cartItemRepository.save(item);
+            subtotal += effectivePrice * item.getQuantity();
+        }
 
         // Apply discount if code exists
         double discountPercent = 0.0;
@@ -158,6 +178,17 @@ public class CartController {
         cartItemRepository.deleteAll(items);
 
         return ResponseEntity.ok("Checkout complete. Total: $" + String.format("%.2f", totalWithTax));
+    }
+
+    private double resolveEffectivePrice(Book book) {
+        double base = book.getPrice();
+        Double salePrice = book.getSalePrice();
+        if (salePrice == null) return base;
+        if (book.getOnSale() != null && !book.getOnSale()) return base;
+        LocalDateTime now = LocalDateTime.now();
+        if (book.getSaleStart() != null && book.getSaleStart().isAfter(now)) return base;
+        if (book.getSaleEnd() != null && book.getSaleEnd().isBefore(now)) return base;
+        return Math.min(base, salePrice);
     }
 }
 

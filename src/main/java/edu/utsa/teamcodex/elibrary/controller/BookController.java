@@ -68,6 +68,18 @@ public class BookController {
                     book.setQuantity(updatedBook.getQuantity());
                     book.setImageUrl(updatedBook.getImageUrl());
                     book.setAvailable(updatedBook.isAvailable());
+                    if (updatedBook.getSalePrice() != null) {
+                        book.setSalePrice(updatedBook.getSalePrice());
+                    }
+                    if (updatedBook.getSaleStart() != null) {
+                        book.setSaleStart(updatedBook.getSaleStart());
+                    }
+                    if (updatedBook.getSaleEnd() != null) {
+                        book.setSaleEnd(updatedBook.getSaleEnd());
+                    }
+                    if (updatedBook.getOnSale() != null) {
+                        book.setOnSale(updatedBook.getOnSale());
+                    }
                     bookRepository.save(book);
                     return ResponseEntity.ok(book);
                 })

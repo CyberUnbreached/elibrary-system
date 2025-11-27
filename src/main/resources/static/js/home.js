@@ -11,6 +11,39 @@ function formatPrice(v) {
   return `$${Number(v).toFixed(2)}`;
 }
 
+function resolveSale(book) {
+  const basePrice = typeof book.price === "number" ? book.price : 0;
+  const salePrice =
+    typeof book.salePrice === "number"
+      ? book.salePrice
+      : typeof book.sale?.salePrice === "number"
+        ? book.sale.salePrice
+        : null;
+  const startsAt = book.saleStart || book.sale?.startsAt;
+  const endsAt = book.saleEnd || book.sale?.endsAt;
+  const activeFlag = book.onSale ?? book.sale?.active ?? true;
+
+  const now = Date.now();
+  const inWindow =
+    (!startsAt || Date.parse(startsAt) <= now) &&
+    (!endsAt || Date.parse(endsAt) >= now);
+
+  const isOnSale =
+    activeFlag &&
+    salePrice !== null &&
+    isFinite(salePrice) &&
+    salePrice < basePrice &&
+    inWindow;
+
+  return {
+    basePrice,
+    salePrice: isOnSale ? salePrice : null,
+    startsAt,
+    endsAt,
+    isOnSale,
+  };
+}
+
 async function loadBooks(searchTerm = "") {
   const query = searchTerm ? `?q=${encodeURIComponent(searchTerm)}` : "";
   const res = await fetch(`${apiBase}/books${query}`);
@@ -64,6 +97,8 @@ async function loadBooks(searchTerm = "") {
   tbody.innerHTML = "";
 
   filteredBooks.forEach(book => {
+    const saleInfo = resolveSale(book);
+
     const imgCell = book.imageUrl
       ? `<img src="${book.imageUrl}" alt="${book.title || "Book"}" style="width:50px;height:70px;object-fit:cover;border-radius:3px;">`
       : `<span class="text-muted">-</span>`;
@@ -72,6 +107,10 @@ async function loadBooks(searchTerm = "") {
     const desc = (book.description || "").trim() || "-";
     const qtyVal = typeof book.quantity === "number" ? book.quantity : 0;
 
+    const priceHtml = saleInfo.isOnSale
+      ? `<div><span class="text-danger">${formatPrice(saleInfo.salePrice)}</span> <small class="text-muted" style="text-decoration:line-through;">${formatPrice(saleInfo.basePrice)}</small></div><div><span class="label label-danger">Sale</span>${saleInfo.endsAt ? ` <small class="text-muted">Ends ${new Date(saleInfo.endsAt).toLocaleDateString()}</small>` : ""}</div>`
+      : formatPrice(saleInfo.basePrice);
+
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${imgCell}</td>
@@ -79,7 +118,7 @@ async function loadBooks(searchTerm = "") {
       <td>${book.author || "-"}</td>
       <td>${book.genre || "-"}</td>
       <td class="text-muted" style="max-width:260px;">${desc}</td>
-      <td>${formatPrice(book.price)}</td>
+      <td>${priceHtml}</td>
       <td>${qtyVal} in stock</td>
       <td>${availabilityText}</td>
     `;
@@ -90,6 +129,7 @@ async function loadBooks(searchTerm = "") {
 function openBookDetail(bookId) {
   const book = currentBooks.find(b => String(b.id) === String(bookId));
   if (!book) return;
+  const saleInfo = resolveSale(book);
 
   const placeholder = `<div class="text-muted" style="width:80px;height:110px;border:1px dashed #ccc;display:flex;align-items:center;justify-content:center;border-radius:3px;">No image</div>`;
   const imgHtml = book.imageUrl
@@ -100,7 +140,10 @@ function openBookDetail(bookId) {
   document.getElementById("detail-image").innerHTML = imgHtml;
   document.getElementById("detail-author").textContent = `Author: ${book.author || "-"}`;
   document.getElementById("detail-genre").textContent = `Genre: ${book.genre || "-"}`;
-  document.getElementById("detail-price").textContent = `Price: ${formatPrice(book.price)}`;
+  const priceDetail = saleInfo.isOnSale
+    ? `${formatPrice(saleInfo.salePrice)} (on sale, was ${formatPrice(saleInfo.basePrice)})`
+    : formatPrice(saleInfo.basePrice);
+  document.getElementById("detail-price").textContent = `Price: ${priceDetail}`;
   const qtyVal = typeof book.quantity === "number" ? book.quantity : 0;
   document.getElementById("detail-quantity").textContent = `Quantity: ${qtyVal}`;
   const availabilityText = book.available ? "Available to Borrow" : "Checked Out";

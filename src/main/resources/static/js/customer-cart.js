@@ -45,6 +45,56 @@ function formatMoney(n) {
   return (Math.round((n ?? 0) * 100) / 100).toFixed(2);
 }
 
+function resolveSalePricing(item) {
+  const basePrice =
+    typeof item.price === "number"
+      ? item.price
+      : typeof item.book?.price === "number"
+        ? item.book.price
+        : 0;
+
+  const salePriceCandidate =
+    typeof item.salePrice === "number"
+      ? item.salePrice
+      : typeof item.book?.salePrice === "number"
+        ? item.book.salePrice
+        : typeof item.book?.sale?.salePrice === "number"
+          ? item.book.sale.salePrice
+          : null;
+
+  const startsAt =
+    item.saleStart ||
+    item.sale?.startsAt ||
+    item.book?.saleStart ||
+    item.book?.sale?.startsAt;
+  const endsAt =
+    item.saleEnd ||
+    item.sale?.endsAt ||
+    item.book?.saleEnd ||
+    item.book?.sale?.endsAt;
+  const activeFlag =
+    item.onSale ??
+    item.sale?.active ??
+    item.book?.onSale ??
+    item.book?.sale?.active ??
+    true;
+
+  const now = Date.now();
+  const inWindow =
+    (!startsAt || Date.parse(startsAt) <= now) &&
+    (!endsAt || Date.parse(endsAt) >= now);
+
+  const isOnSale =
+    activeFlag &&
+    salePriceCandidate !== null &&
+    isFinite(salePriceCandidate) &&
+    salePriceCandidate < basePrice &&
+    inWindow;
+
+  const unitPrice = isOnSale ? salePriceCandidate : basePrice;
+  return { unitPrice, basePrice, salePrice: isOnSale ? salePriceCandidate : null, isOnSale, endsAt };
+}
+
 // --------------------------------------------------
 // Cart Loading & Rendering
 // --------------------------------------------------
@@ -98,16 +148,21 @@ async function loadCart() {
 
     items.forEach((it) => {
       const qty = it.quantity || 1;
-      const unit = it.price || 0;
+      const pricing = resolveSalePricing(it);
+      const unit = pricing.unitPrice || 0;
       const line = qty * unit;
       subtotal += line;
 
       const tr = document.createElement("tr");
+      const priceCell = pricing.isOnSale
+        ? `<div class="text-danger">$${formatMoney(pricing.unitPrice)}</div><small class="text-muted" style="text-decoration:line-through;">$${formatMoney(pricing.basePrice)}</small>${pricing.endsAt ? `<div><small class="text-muted">Ends ${new Date(pricing.endsAt).toLocaleDateString()}</small></div>` : ""}`
+        : `$${formatMoney(pricing.unitPrice)}`;
+
       tr.innerHTML = `
         <td>${it.book ? it.book.title : "Unknown"}</td>
         <td>${it.book ? it.book.author : "-"}</td>
         <td class="text-center">${qty}</td>
-        <td class="text-right">$${formatMoney(unit)}</td>
+        <td class="text-right">${priceCell}</td>
         <td class="text-right">$${formatMoney(line)}</td>
         <td class="text-center">
           <button class="btn btn-xs btn-danger" data-remove-id="${it.id}">

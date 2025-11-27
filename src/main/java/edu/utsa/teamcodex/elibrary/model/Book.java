@@ -3,6 +3,7 @@ package edu.utsa.teamcodex.elibrary.model;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 public class Book {
@@ -26,6 +27,12 @@ public class Book {
 
     // NEW: Inventory quantity
     private int quantity;
+
+    // Optional sale fields (time-boxed sale price override)
+    private Double salePrice;
+    private LocalDateTime saleStart;
+    private LocalDateTime saleEnd;
+    private Boolean onSale;
 
     @ManyToOne
     @JoinColumn(name = "borrowed_by_id")
@@ -78,4 +85,16 @@ public class Book {
 
     public User getBorrowedBy() { return borrowedBy; }
     public void setBorrowedBy(User borrowedBy) { this.borrowedBy = borrowedBy; }
+
+    public Double getSalePrice() { return salePrice; }
+    public void setSalePrice(Double salePrice) { this.salePrice = salePrice; }
+
+    public LocalDateTime getSaleStart() { return saleStart; }
+    public void setSaleStart(LocalDateTime saleStart) { this.saleStart = saleStart; }
+
+    public LocalDateTime getSaleEnd() { return saleEnd; }
+    public void setSaleEnd(LocalDateTime saleEnd) { this.saleEnd = saleEnd; }
+
+    public Boolean getOnSale() { return onSale; }
+    public void setOnSale(Boolean onSale) { this.onSale = onSale; }
 }
