@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/cart")
@@ -162,6 +163,7 @@ public class CartController {
             appliedDiscountCode = discount.getCode();
         }
         // Create Purchase objects for each item (capturing quantity, sale/discount context)
+        String transactionId = UUID.randomUUID().toString();
         double discountedTotalForTax = 0.0;
         for (CartItem item : items) {
             Book freshBook = bookRepository.findById(item.getBook().getId())
@@ -184,7 +186,8 @@ public class CartController {
                     basePrice,
                     saleApplied,
                     appliedDiscountCode,
-                    discountPercent > 0 ? discountPercent : null
+                    discountPercent > 0 ? discountPercent : null,
+                    transactionId
             );
             purchaseRepository.save(purchase);
         }

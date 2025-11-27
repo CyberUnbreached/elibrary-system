@@ -16,6 +16,9 @@ public class Purchase {
     @ManyToOne(optional = false)
     private Book book;
 
+    @Column(nullable = false)
+    private String transactionId;
+
     private double price;
 
     private LocalDate purchaseDate;
@@ -30,16 +33,18 @@ public class Purchase {
     // Constructors
     public Purchase() {}
 
-    public Purchase(User user, Book book, double price, LocalDate purchaseDate) {
+    public Purchase(User user, Book book, double price, LocalDate purchaseDate, String transactionId) {
         this.user = user;
         this.book = book;
         this.price = price;
         this.purchaseDate = purchaseDate;
+        this.transactionId = transactionId;
     }
 
     public Purchase(User user, Book book, double price, LocalDate purchaseDate,
                     int quantity, double basePrice, boolean saleApplied,
-                    String discountCodeUsed, Double discountPercentApplied) {
+                    String discountCodeUsed, Double discountPercentApplied,
+                    String transactionId) {
         this.user = user;
         this.book = book;
         this.price = price;
@@ -49,6 +54,7 @@ public class Purchase {
         this.saleApplied = saleApplied;
         this.discountCodeUsed = discountCodeUsed;
         this.discountPercentApplied = discountPercentApplied;
+        this.transactionId = transactionId;
     }
 
     // Getters and Setters
@@ -80,4 +86,7 @@ public class Purchase {
 
     public Double getDiscountPercentApplied() { return discountPercentApplied; }
     public void setDiscountPercentApplied(Double discountPercentApplied) { this.discountPercentApplied = discountPercentApplied; }
+
+    public String getTransactionId() { return transactionId; }
+    public void setTransactionId(String transactionId) { this.transactionId = transactionId; }
 }

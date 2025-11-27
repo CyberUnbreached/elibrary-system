@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/purchases")
@@ -62,6 +63,7 @@ public class PurchaseController {
                 : fallback;
         double finalPrice = pricePerUnit * quantity;
         boolean saleApplied = pricePerUnit + 1e-9 < basePrice;
+        String transactionId = UUID.randomUUID().toString();
 
         Purchase purchase = new Purchase(
                 user,
@@ -72,7 +74,8 @@ public class PurchaseController {
                 basePrice,
                 saleApplied,
                 null,
-                null
+                null,
+                transactionId
         );
         purchaseRepository.save(purchase);
 
