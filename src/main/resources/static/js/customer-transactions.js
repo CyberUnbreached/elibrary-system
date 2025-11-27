@@ -57,17 +57,29 @@ async function loadPurchases() {
     tbody.innerHTML = "";
 
     if (!purchases || purchases.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">No purchases found.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">No purchases found.</td></tr>`;
       return;
     }
 
     purchases.forEach(p => {
       const tr = document.createElement("tr");
+      const qty = p.quantity && p.quantity > 0 ? p.quantity : 1;
+      const finalPaid = typeof p.price === "number" ? p.price : 0;
+      const saleTag = p.saleApplied ? "Yes" : "No";
+      const discountTag =
+        typeof p.discountPercentApplied === "number" && p.discountPercentApplied > 0
+          ? `${p.discountPercentApplied}%`
+          : p.discountCodeUsed
+            ? "Yes"
+            : "No";
       tr.innerHTML = `
         <td>${p.book ? p.book.title : "Unknown Book"}</td>
         <td>${p.book ? p.book.author : "Unknown"}</td>
         <td>${p.purchaseDate || "-"}</td>
-        <td>$${(p.price ?? 0).toFixed(2)}</td>
+        <td>${qty}</td>
+        <td>$${finalPaid.toFixed(2)}</td>
+        <td>${saleTag}</td>
+        <td>${discountTag}</td>
       `;
       tbody.appendChild(tr);
     });
@@ -75,7 +87,7 @@ async function loadPurchases() {
     console.error("Error loading purchase history:", err);
     const tbody = document.getElementById("purchases-body");
     if (tbody) {
-      tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Error loading purchases.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error loading purchases.</td></tr>`;
     }
   }
 }
@@ -84,4 +96,3 @@ window.onload = function () {
   loadTransactions();
   loadPurchases();
 };
-

@@ -137,18 +137,17 @@ public class CartController {
             bookRepository.save(freshBook);
         }
 
-        double subtotal = 0.0;
         for (CartItem item : items) {
             Book freshBook = bookRepository.findById(item.getBook().getId())
                     .orElseThrow(() -> new RuntimeException("Book not found"));
             double effectivePrice = resolveEffectivePrice(freshBook);
             item.setPrice(effectivePrice); // keep cart price in sync with current sale/base price
             cartItemRepository.save(item);
-            subtotal += effectivePrice * item.getQuantity();
         }
 
         // Apply discount if code exists
         double discountPercent = 0.0;
+        String appliedDiscountCode = null;
         if (discountCode != null && !discountCode.trim().isEmpty()) {
             DiscountCode discount = discountRepository.findByCodeIgnoreCase(discountCode.trim());
             if (discount == null || !discount.isActive()) {
@@ -160,19 +159,38 @@ public class CartController {
             }
             // Clamp to 0-100 to avoid over-discounting
             discountPercent = Math.max(0.0, Math.min(100.0, discount.getDiscountPercent()));
+            appliedDiscountCode = discount.getCode();
         }
-        double discountedTotal = subtotal * (1 - discountPercent / 100.0);
-
-        // Apply tax
-        double totalWithTax = discountedTotal * 1.0825; // 8.25% tax
-
-        // Create Purchase objects for each item
+        // Create Purchase objects for each item (capturing quantity, sale/discount context)
+        double discountedTotalForTax = 0.0;
         for (CartItem item : items) {
-            Purchase purchase = new Purchase(cart.getUser(), item.getBook(),
-                    item.getPrice() * item.getQuantity(),
-                    java.time.LocalDate.now());
+            Book freshBook = bookRepository.findById(item.getBook().getId())
+                    .orElseThrow(() -> new RuntimeException("Book not found"));
+
+            double basePrice = freshBook.getPrice();
+            double effectivePrice = resolveEffectivePrice(freshBook);
+            boolean saleApplied = effectivePrice + 1e-9 < basePrice;
+
+            double lineBeforeDiscount = effectivePrice * item.getQuantity();
+            double lineAfterDiscount = lineBeforeDiscount * (1 - discountPercent / 100.0);
+            discountedTotalForTax += lineAfterDiscount;
+
+            Purchase purchase = new Purchase(
+                    cart.getUser(),
+                    freshBook,
+                    lineAfterDiscount,
+                    LocalDate.now(),
+                    item.getQuantity(),
+                    basePrice,
+                    saleApplied,
+                    appliedDiscountCode,
+                    discountPercent > 0 ? discountPercent : null
+            );
             purchaseRepository.save(purchase);
         }
+
+        // Apply tax
+        double totalWithTax = discountedTotalForTax * 1.0825; // 8.25% tax
 
         // Clear cart
         cartItemRepository.deleteAll(items);

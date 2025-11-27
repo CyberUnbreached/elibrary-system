@@ -53,11 +53,27 @@ public class PurchaseController {
                 .orElseThrow(() -> new RuntimeException("Book not found"));
 
         double fallback = resolveEffectivePrice(book);
-        double price = (purchaseRequest != null && purchaseRequest.getPrice() > 0)
+        int quantity = (purchaseRequest != null && purchaseRequest.getQuantity() > 0)
+                ? purchaseRequest.getQuantity()
+                : 1;
+        double basePrice = book.getPrice();
+        double pricePerUnit = (purchaseRequest != null && purchaseRequest.getPrice() > 0)
                 ? purchaseRequest.getPrice()
                 : fallback;
+        double finalPrice = pricePerUnit * quantity;
+        boolean saleApplied = pricePerUnit + 1e-9 < basePrice;
 
-        Purchase purchase = new Purchase(user, book, price, LocalDate.now());
+        Purchase purchase = new Purchase(
+                user,
+                book,
+                finalPrice,
+                LocalDate.now(),
+                quantity,
+                basePrice,
+                saleApplied,
+                null,
+                null
+        );
         purchaseRepository.save(purchase);
 
         return ResponseEntity.ok("Purchase successful for book: " + book.getTitle());
