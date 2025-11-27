@@ -123,16 +123,27 @@ function renderPurchases() {
     return;
   }
 
-  const grouped = groupPurchasesByTransaction(purchasesCache);
-
+  // Sort grouped transactions
   const sorted = [...grouped].sort((a, b) => {
     const direction = purchaseSortDirection === "asc" ? 1 : -1;
 
+    if (purchaseSortField === "quantity") {
+      // sort by total quantity
+      return (a.totalQuantity - b.totalQuantity) * direction;
+    }
+
+    if (purchaseSortField === "amount") {
+      // sort by total amount paid
+      return (a.totalAmount - b.totalAmount) * direction;
+    }
+
+    // default: sort by date
     const dateA = a.purchaseDate ? new Date(a.purchaseDate) : new Date(0);
     const dateB = b.purchaseDate ? new Date(b.purchaseDate) : new Date(0);
 
     return (dateA - dateB) * direction;
   });
+
 
   sorted.forEach((tx) => {
     const tr = document.createElement("tr");
