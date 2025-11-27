@@ -56,7 +56,6 @@ function groupPurchasesByTransaction(purchases) {
 function showPurchaseDetails(transactionId) {
   const items = purchasesCache.filter((p) => p.transactionId === transactionId);
 
-  // Friendly header code
   document.getElementById("details-transaction-id").textContent =
     `(${formatTransactionId(transactionId)})`;
 
@@ -100,7 +99,7 @@ async function loadPurchases() {
     console.error("Error loading purchase history:", err);
     const tbody = document.getElementById("purchases-body");
     if (tbody) {
-      tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">
         Error loading purchases.
       </td></tr>`;
     }
@@ -108,7 +107,7 @@ async function loadPurchases() {
 }
 
 /* ============================================================
-   RENDER PURCHASES (GROUPED BY TRANSACTION)
+   RENDER PURCHASES (GROUPED + SORTED)
    ============================================================ */
 function renderPurchases() {
   const tbody = document.getElementById("purchases-body");
@@ -117,7 +116,7 @@ function renderPurchases() {
   tbody.innerHTML = "";
 
   if (!purchasesCache || purchasesCache.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">
       No purchases found.
     </td></tr>`;
     return;
@@ -138,13 +137,14 @@ function renderPurchases() {
       return (a.totalAmount - b.totalAmount) * direction;
     }
 
-    // default: sort by purchase date
+    // default: date sorting
     const dateA = a.purchaseDate ? new Date(a.purchaseDate) : new Date(0);
     const dateB = b.purchaseDate ? new Date(b.purchaseDate) : new Date(0);
+
     return (dateA - dateB) * direction;
   });
 
-  // Render to table
+  // Render
   sorted.forEach((tx) => {
     const tr = document.createElement("tr");
 
@@ -164,7 +164,6 @@ function renderPurchases() {
     tbody.appendChild(tr);
   });
 }
-
 
 /* ============================================================
    SORT HANDLERS
@@ -187,7 +186,7 @@ function attachPurchaseSortHandlers() {
 }
 
 /* ============================================================
-   LOAD USER BORROW HISTORY
+   LOAD BORROW HISTORY (AFTER PURCHASE HISTORY)
    ============================================================ */
 async function loadTransactions() {
   try {
