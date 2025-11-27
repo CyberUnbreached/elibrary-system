@@ -22,7 +22,7 @@ public class Purchase {
 
     // Additional context for reporting
     private int quantity = 1;              // number of copies purchased
-    private double basePrice;              // regular unit price at time of purchase
+    private Double basePrice;              // regular unit price at time of purchase
     private Boolean saleApplied;           // whether a sale price was used
     private String discountCodeUsed;       // discount code applied, if any
     private Double discountPercentApplied; // percent discount applied from code
