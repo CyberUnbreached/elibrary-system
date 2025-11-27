@@ -16,6 +16,14 @@ if (typeof renderNav === "function") {
 }
 
 /* ============================================================
+   FRIENDLY CUSTOMER TRANSACTION ID (TX-ABC123)
+   ============================================================ */
+function formatTransactionId(rawId) {
+  if (!rawId) return "TX-UNKNOWN";
+  return "TX-" + rawId.substring(0, 6).toUpperCase();
+}
+
+/* ============================================================
    GROUP PURCHASES BY TRANSACTION
    ============================================================ */
 function groupPurchasesByTransaction(purchases) {
@@ -43,14 +51,14 @@ function groupPurchasesByTransaction(purchases) {
 }
 
 /* ============================================================
-   SHOW TRANSACTION DETAILS (MODAL)
+   SHOW TRANSACTION DETAILS IN MODAL
    ============================================================ */
 function showPurchaseDetails(transactionId) {
   const items = purchasesCache.filter((p) => p.transactionId === transactionId);
 
-  // Update modal title
+  // Friendly header code
   document.getElementById("details-transaction-id").textContent =
-    `(Transaction ${transactionId})`;
+    `(${formatTransactionId(transactionId)})`;
 
   const tbody = document.getElementById("purchase-details-body");
   tbody.innerHTML = "";
@@ -63,7 +71,6 @@ function showPurchaseDetails(transactionId) {
       : "-";
 
     const tr = document.createElement("tr");
-
     tr.innerHTML = `
       <td>${p.book ? p.book.title : "Unknown"}</td>
       <td>${p.book ? p.book.author : "-"}</td>
@@ -73,7 +80,6 @@ function showPurchaseDetails(transactionId) {
       <td>${discountCode}</td>
       <td>${discountPct}</td>
     `;
-
     tbody.appendChild(tr);
   });
 
@@ -102,7 +108,7 @@ async function loadPurchases() {
 }
 
 /* ============================================================
-   RENDER PURCHASES (GROUPED)
+   RENDER PURCHASES (GROUPED BY TRANSACTION)
    ============================================================ */
 function renderPurchases() {
   const tbody = document.getElementById("purchases-body");
@@ -132,15 +138,13 @@ function renderPurchases() {
     const tr = document.createElement("tr");
 
     tr.innerHTML = `
-      <td><b>${tx.transactionId}</b></td>
+      <td><b>${formatTransactionId(tx.transactionId)}</b></td>
       <td>${tx.purchaseDate || "-"}</td>
       <td>${tx.items.length} item(s)</td>
       <td>${tx.totalQuantity}</td>
       <td>$${tx.totalAmount.toFixed(2)}</td>
       <td>
-        <button class="btn btn-sm btn-info" onclick="showPurchaseDetails('${
-          tx.transactionId
-        }')">
+        <button class="btn btn-sm btn-info" onclick="showPurchaseDetails('${tx.transactionId}')">
           Details
         </button>
       </td>
@@ -155,9 +159,8 @@ function renderPurchases() {
    ============================================================ */
 function attachPurchaseSortHandlers() {
   const sortFieldSelect = document.getElementById("purchase-sort-field");
-  const sortDirectionSelect = document.getElementById(
-    "purchase-sort-direction"
-  );
+  const sortDirectionSelect = document.getElementById("purchase-sort-direction");
+
   if (!sortFieldSelect || !sortDirectionSelect) return;
 
   sortFieldSelect.addEventListener("change", () => {
@@ -172,7 +175,7 @@ function attachPurchaseSortHandlers() {
 }
 
 /* ============================================================
-   LOAD USER BORROW HISTORY (AFTER PURCHASES)
+   LOAD USER BORROW HISTORY
    ============================================================ */
 async function loadTransactions() {
   try {
