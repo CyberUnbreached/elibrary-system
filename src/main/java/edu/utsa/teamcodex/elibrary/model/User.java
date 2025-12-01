@@ -1,6 +1,7 @@
 package edu.utsa.teamcodex.elibrary.model;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.util.ArrayList;
@@ -16,8 +17,9 @@ public class User {
 
     private String username;
 
-    @JsonIgnore  // Never return passwords in JSON
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
+
 
     private String email;
     private String role;
